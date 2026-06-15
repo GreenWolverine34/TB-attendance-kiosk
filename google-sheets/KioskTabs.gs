@@ -10,7 +10,7 @@ var TAB_SPECS = [
     urlPropertyName: "MEETING_REPORT_URL",
   },
   {
-    sheetName: "Checkin Data",
+    sheetName: "Check in Data",
     csvPropertyName: "CHECKIN_DATA_CSV",
     urlPropertyName: "CHECKIN_DATA_URL",
   },

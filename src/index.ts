@@ -35,8 +35,8 @@ if (require("electron-squirrel-startup")) {
 }
 
 const DB_PATH = path.join(app.getPath("userData"), "data.db");
-const KIOSK_PIN = process.env.ATTENDANCE_KIOSK_PIN || "694694";
-const EXPORT_PIN = process.env.ATTENDANCE_EXPORT_PIN || "";
+const KIOSK_PIN = process.env.ATTENDANCE_KIOSK_PIN || "4561";
+const EXPORT_PIN = process.env.ATTENDANCE_EXPORT_PIN || "1654";
 
 (async () => {
     const db = await open({
@@ -285,7 +285,7 @@ const createWindow = async () => {
     ipcMain.on("exportCheckinData", async (_, startDate, endDate, meetingThreshold, sendToSlack) => {
         try {
             const filename = getTimestampedFilename("checkins", "csv");
-            const filePath = sendToSlack ? null : await promptForFilePath(filename, "Export Checkin Data");
+            const filePath = sendToSlack ? null : await promptForFilePath(filename, "Export Check in Data");
 
             if (!sendToSlack && filePath === null) {
                 return;
@@ -294,14 +294,14 @@ const createWindow = async () => {
             const data = await generateCheckinData(db, startDate, endDate, meetingThreshold);
 
             if (sendToSlack) {
-                await sendReportToSlack(slackClient, data, filename, "Checkin data");
+                await sendReportToSlack(slackClient, data, filename, "Check in Data");
             } else {
                 await fs.promises.writeFile(filePath, data);
             }
 
             await dialog.showMessageBox(mainWindow, {
                 title: "Success",
-                message: "Checkin data exported successfully",
+                message: "Check in data exported successfully",
             });
         } catch (err) {
             dialog.showErrorBox("Error", err.toString());

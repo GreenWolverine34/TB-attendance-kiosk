@@ -4,7 +4,7 @@ This folder contains a Google Apps Script that can populate three tabs from CSV 
 
 - `Attendance Report`
 - `Meeting Report`
-- `Checkin Data`
+- `Check in Data`
 
 ## How to use
 

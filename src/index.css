@@ -1,400 +1,309 @@
-/* https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap */
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('../assets/Inter-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-/* https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap&text=%E2%8C%AB%E2%8F%8E */
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('../assets/Inter-symbols.woff2') format('woff2');
-}
-
-body {
-  --brand-green: #247c28;
-  margin: 0 1.5rem;
-  background-color: white;
-  color: var(--brand-green);
-  text-align: center;
-}
-
-body, input, button {
-  font-family: 'Inter', sans-serif;
-}
-
-.row {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
-.column {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.title {
-  margin: 1rem 0;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 0.5rem;
-}
-
-.panel-toggle-button {
-  border: 1px solid var(--brand-green);
-  color: var(--brand-green);
-  background: white;
-  border-radius: 8px;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.9rem;
-}
-
-.panel-toggle-button:disabled {
-  opacity: 0.45;
-}
-
-.terrorbytes-logo {
-  height: 225px;
-  margin: 1rem auto 0;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  border: 0;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.terrorbytes-logo-image {
-  max-width: 260px;
-  max-height: 225px;
-  object-fit: contain;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.attendance-roster {
-  height: 225px;
-  margin: 1rem auto 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  width: 100%;
-  max-width: 330px;
-  border: 1px solid rgba(36, 124, 40, 0.25);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.attendance-roster-header {
-  padding: 0.75rem 0.9rem 0.5rem;
-  border-bottom: 1px solid rgba(36, 124, 40, 0.18);
-}
-
-.attendance-roster-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.attendance-roster-header p {
-  margin: 0.25rem 0 0;
-  font-size: 0.85rem;
-}
-
-.attendance-roster-list {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  text-align: left;
-}
-
-.attendance-roster-item {
-  padding: 0.7rem 0.9rem;
-  border-bottom: 1px solid rgba(36, 124, 40, 0.1);
-}
-
-.attendance-roster-name {
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.attendance-roster-time,
-.attendance-roster-empty {
-  font-size: 0.85rem;
-  color: #555;
-}
-
-.attendance-roster-empty {
-  padding: 0.9rem;
-}
-
-.date {
-  font-size: 1.25rem;
-  margin-top: 1rem;
-  margin-bottom: 0;
-}
-
-.time {
-  font-size: 2rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--brand-green);
-  margin-top: 0;
-}
-
-.id-number-input {
-  width: 72.5%;
-  font-size: 2rem;
-  margin: 0 auto 0.75rem;
-  padding: 0.5rem;
-  caret-color: transparent;
-  border-radius: 8px;
-  border: 1px solid grey;
-}
-
-.id-number-input.shake {
-    animation: shake 0.2s ease-in-out 0s 2;
-}
-
-@keyframes shake {
-  0% { margin-left: 0; }
-  25% { margin-left: 1rem; }
-  75% { margin-left: -1rem; }
-  100% { margin-left: 0; }
-}
-
-.id-number-input:focus {
-  outline-width: 0;
-}
-
-.id-number-input:disabled {
-  background: #f2f2f2;
-  color: #777;
-}
-
-.numpad {
-  width: 80%;
-  margin: 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-
-  button {
-    flex-basis: 30%;
-    margin: 5px;
-    height: 3.5rem;
-    font-size: 2rem;
-    border-radius: 8px;
-    border: none;
-    transition: all 0.2s ease-in;
-  }
-
-  button.active {
-    background-color: var(--brand-green);
-    color: white;
-    transition: all 0.1s ease-out;
-  }
-}
-
-.pin-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: center;
-  margin-top: 1rem;
-}
-
-.pin-panel h2 {
-  margin: 0;
-}
-
-.pin-instructions {
-  margin: 0;
-  font-size: 1rem;
-  white-space: normal;
-}
-
-.footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: var(--brand-green);
-  color: white;
-  transition: all 0.25s ease-in;
-}
-
-.source-credit {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 4.1rem;
-  margin: 0;
-  color: #555;
-  font-size: 0.75rem;
-}
-
-.footer.ok {
-  background-color: var(--brand-green);
-  transition: all 0.1s ease-out;
-}
-
-.footer.error {
-  background-color: red;
-  animation: blinker 1s linear infinite;
-  transition: all 0.1s ease-out;
-}
-
-@keyframes blinker {
-  50% {
-    background-color: #f88;
-  }
-}
-
-.prompt {
-  font-size: 1.5rem;
-  margin: 1rem 0;
-  white-space: nowrap;
-}
-
-.modal {
-  position: absolute;
-  inset: 30px;
-  border: 1px solid rgb(204, 204, 204);
-  background: white;
-  overflow: auto;
-  border-radius: 8px;
-  outline: none;
-  padding: 20px;
-  color: black;
-  font-size: 0.9rem;
-
-  h2 {
-    margin: 0;
-  }
-
-  .modal-close-button {
-    position: absolute;
-    top: 0;
-    right: 0;
-    padding: 20px;
-    font-size: 1.5rem;
-    border: none;
-    background: none;
-    cursor: pointer;
-    transition: none;
-  }
-
-  .modal-close-button:active {
-    background: none;
-    color: black;
-    transition: none;
-  }
-
-  .today-stats {
-    margin: 0 1rem;
-  }
-
-  label {
-    font-size: 1rem;
-  }
-
-  input, button {
-    font-size: 1rem;
-    border-radius: 8px;
-    border: 1px solid grey;
-    padding: 0.5rem;
-    transition: all 0.2s ease-in;
-  }
-
-  button:enabled:active {
-    background-color: var(--brand-green);
-    color: white;
-    transition: all 0.1s ease-out;
-  }
-
-  .modal-row {
-    margin-top: 0.75rem;
-
-    div {
-      margin: 0.25rem 0;
-    }
-  }
-
-  .date-input {
-    text-align: center;
-  }
-
-  .date-range {
-    font-size: 1rem;
-  }
-
-  #meeting-threshold {
-    width: 100px;
-    text-align: center;
-  }
-
-  input[type="radio"] {
-    transform: scale(1.5);
-    margin-left: 1rem;
-    margin-right: 0.5rem;
-  }
-
-  #meeting-threshold::-webkit-outer-spin-button,
-  #meeting-threshold::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  .meeting-threshold-button {
-    width: 50px;
-    margin: 0 0.5rem;
-  }
-
-  .modal-submit-button {
-    margin: 0.25rem;
-  }
-
-  .build-footer {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translate(-50%, -50%);
+/* ==========================================
+   FONT FACES
+   ========================================== */
+   @font-face { 
+    font-family: 'Inter'; 
+    font-style: normal; 
+    font-weight: 100 900; 
+    font-display: swap; 
+    src: url('../assets/Inter-latin.woff2') format('woff2'); 
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; 
+  } 
+  @font-face { 
+    font-family: 'Inter'; 
+    font-style: normal; 
+    font-weight: 100 900; 
+    font-display: swap; 
+    src: url('../assets/Inter-symbols.woff2') format('woff2'); 
+  } 
+  
+  /* ==========================================
+     GLOBAL LAYOUT (FORCED 800x480 VIEWPORT)
+     ========================================== */
+  body { 
+    --brand-green: #247c28; 
+    margin: 0; 
+    padding: 0;
+    background-color: white; 
+    color: var(--brand-green); 
+    text-align: center; 
+    height: 100vh;
+    overflow: hidden; 
+  } 
+  
+  body, input, button { 
+    font-family: 'Inter', sans-serif; 
+  } 
+  
+  /* CONTAINER STACKING TEXT ELEMENTS NATURALLY */
+  .header-container {
     width: 100%;
-    font-size: 0.75rem;
+    margin: 0.5rem 0 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-}
+  
+  .title { 
+    margin: 0; 
+    font-size: 1.8rem; 
+    font-weight: 700;
+    line-height: 1.1;
+  } 
+  
+  /* FIXED: FLAT TEXT CENTERED RIGHT UNDER THE WORDS */
+  .source-credit { 
+    margin: 0.15rem 0 0 0 !important; 
+    color: #777 !important; 
+    font-size: 0.7rem !important; /* Smaller text sizing */
+    font-weight: normal !important;
+    background: transparent !important; /* Removes button styling container */
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    position: static !important; /* Snaps text directly back into vertical flow */
+    transform: none !important;
+  } 
+  
+  .row { 
+    display: flex; 
+    flex-direction: row; 
+    height: calc(100vh - 6.8rem); /* Re-balanced to handle header container heights */
+    align-items: center; 
+    padding: 0 2rem;
+    box-sizing: border-box;
+  } 
+  
+  .column { 
+    display: flex; 
+    flex-direction: column; 
+    flex: 1; 
+    justify-content: center; 
+    align-items: center;
+    padding: 0 1rem;
+    height: 100%;
+  } 
+  
+  .column-divider { 
+    width: 1px; 
+    background-color: rgba(36, 124, 40, 0.2); 
+    margin: 1rem 0; 
+    align-self: stretch; 
+  } 
+  
+  /* ==========================================
+     LEFT PANEL BRANDING 
+     ========================================== */
+  .terrorbytes-logo { 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-height: 180px; 
+    margin-bottom: 0.5rem;
+    background: transparent; 
+    border: 0; 
+    user-select: none; 
+    -webkit-user-drag: none; 
+  } 
+  
+  .terrorbytes-logo-image { 
+    max-width: 90%; 
+    max-height: 180px; 
+    object-fit: contain; 
+    user-select: none; 
+    -webkit-user-drag: none; 
+  } 
+  
+  .date { 
+    font-size: 1.1rem; 
+    margin: 0;
+    color: #555;
+  } 
+  
+  .time { 
+    font-size: 2.1rem; 
+    font-weight: 600;
+    font-variant-numeric: tabular-nums; 
+    color: var(--brand-green); 
+    margin-top: 0.15rem; 
+    margin-bottom: 0; 
+  } 
+  
+  /* ==========================================
+     RIGHT PANEL INPUT & DIALER SIZING
+     ========================================== */
+  .pin-panel { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    width: 100%;
+  } 
+  
+  .pin-panel h2 { 
+    display: none; 
+  } 
+  
+  .id-number-input { 
+    width: 100%; 
+    max-width: 340px;
+    font-size: 2.2rem; 
+    margin-bottom: 1rem; 
+    padding: 0.4rem; 
+    caret-color: transparent; 
+    border-radius: 8px; 
+    border: 1px solid #bbb; 
+    text-align: center;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  } 
+  
+  .id-number-input.shake { animation: shake 0.2s ease-in-out 0s 2; } 
+  @keyframes shake { 
+    0% { margin-left: 0; } 
+    25% { margin-left: 1rem; } 
+    75% { margin-left: -1rem; } 
+    100% { margin-left: 0; } 
+  } 
+  .id-number-input:focus { outline-color: var(--brand-green); } 
+  .id-number-input:disabled { background: #f2f2f2; color: #777; } 
+  
+  .numpad { 
+    width: 100%; 
+    max-width: 340px;
+    margin: 0 auto; 
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 12px; 
+    
+    button { 
+      width: 100%;
+      height: 3.6rem; 
+      font-size: 1.8rem; 
+      font-weight: 500;
+      color: #111;
+      background-color: #eaeaea; 
+      border-radius: 8px; 
+      border: none; 
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.1s ease;
+    } 
+    
+    button:active, button.active { 
+      background-color: var(--brand-green); 
+      color: white; 
+    } 
+  } 
+  
+  /* ==========================================
+     FOOTER NOTIFICATION STRIP 
+     ========================================== */
+  /* ==========================================
+   GLOBAL LAYOUT (UPDATED HEIGHT BALANCE)
+   ========================================== */
+.row { 
+  display: flex; 
+  flex-direction: row; 
+  height: calc(100vh - 5.8rem); /* Adjusted down to match the new shorter footer height */
+  align-items: center; 
+  padding: 0 2rem;
+  box-sizing: border-box;
+} 
 
-.ReactModal__Overlay {
-  opacity: 0;
-  transition: opacity 250ms ease-in-out;
-}
+/* ==========================================
+   FOOTER NOTIFICATION STRIP (SHORTER BASE)
+   ========================================== */
+.footer { 
+  position: fixed !important; 
+  bottom: 0 !important; 
+  left: 0 !important; 
+  right: 0 !important; 
+  height: 3.5rem !important;  /* FIXED: Reduced from 4.5rem to make the bar shorter */
+  display: flex !important; 
+  align-items: center !important; 
+  justify-content: center !important; 
+  padding: 0 2rem !important; 
+  background-color: var(--brand-green) !important; 
+  color: white !important; 
+  font-weight: bold !important; 
+  box-sizing: border-box !important; 
+  z-index: 9999 !important; 
+} 
 
-.ReactModal__Overlay--after-open {
-  opacity: 1;
+.prompt { 
+  font-size: 1.15rem !important; /* Scaled down slightly to fit cleanly within the shorter bar */
+  margin: 0 !important; 
+  display: block !important;
+  text-align: center !important; 
+  white-space: normal !important; 
+  word-wrap: break-word !important; 
+  width: 100% !important; 
+  line-height: 1.25 !important;       
 }
-
-.ReactModal__Overlay--before-close {
-  opacity: 0;
-}
-
-.focus-modal {
-  padding: 0;
-}
-
-.focus-modal-content {
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+  
+  .footer.ok, .footer.error { 
+    background-color: var(--brand-green) !important; 
+  } 
+  @keyframes blinker { 50% { background-color: #f88; } } 
+  
+  /* ==========================================
+     ADMIN SETTINGS MODAL INTERFACES
+     ========================================== */
+  .modal { 
+    position: absolute; 
+    inset: 30px; 
+    border: 1px solid rgb(204, 204, 204); 
+    background: white; 
+    overflow: auto; 
+    border-radius: 8px; 
+    outline: none; 
+    padding: 20px; 
+    color: black; 
+    font-size: 0.9rem; 
+    h2 { margin: 0; } 
+    
+    .modal-close-button { 
+      position: absolute; 
+      top: 0; 
+      right: 0; 
+      padding: 20px; 
+      font-size: 1.5rem; 
+      border: none; 
+      background: none; 
+      cursor: pointer; 
+      transition: none; 
+    } 
+    .modal-close-button:active { background: none; color: black; transition: none; } 
+    .today-stats { margin: 0 1rem; } 
+    label { font-size: 1rem; } 
+    
+    input, button { 
+      font-size: 1rem; 
+      border-radius: 8px; 
+      border: 1px solid grey; 
+      padding: 0.5rem; 
+      transition: all 0.2s ease-in; 
+    } 
+    button:enabled:active { background-color: var(--brand-green); color: white; transition: all 0.1s ease-out; } 
+    .modal-row { 
+      margin-top: 0.75rem; 
+      div { margin: 0.25rem 0; } 
+    } 
+    .date-input { text-align: center; } 
+    .date-range { font-size: 1rem; } 
+    #meeting-threshold { width: 100px; text-align: center; } 
+    input[type="radio"] { transform: scale(1.5); margin-left: 1rem; margin-right: 0.5rem; } 
+    #meeting-threshold::-webkit-outer-spin-button, #meeting-threshold::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } 
+    .meeting-threshold-button { width: 50px; margin: 0 0.5rem; } 
+    .modal-submit-button { margin: 0.25rem; } 
+    .build-footer { position: absolute; bottom: 0; left: 50%; transform: translate(-50%, -50%); width: 100%; font-size: 0.75rem; } 
+  } 
+  
+  .ReactModal__Overlay { opacity: 0; transition: opacity 250ms ease-in-out; } 
+  .ReactModal__Overlay--after-open { opacity: 1; } 
+  .ReactModal__Overlay--before-close { opacity: 0; } 
+  .focus-modal { padding: 0; } 
+  .focus-modal-content { height: 100%; display: flex; justify-content: center; align-items: center; }
+  

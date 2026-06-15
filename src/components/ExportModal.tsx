@@ -145,7 +145,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                     disabled={!enabledActions.sendToSlack}
                     checked={sendToSlack}
                     onChange={() => setSendToSlack(true)} />
-                <label htmlFor="send-to-slack">Send to Kevin on Slack</label>
+                <label htmlFor="send-to-slack">Send to Karissa on Slack</label>
             </div>
             <div className="modal-row">
                 <button
@@ -164,7 +164,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                     name="export-checkin-data"
                     className="modal-submit-button"
                     type="submit">
-                    Checkin Data
+                    Check in Data
                 </button>
                 <button
                     name="import-students"
