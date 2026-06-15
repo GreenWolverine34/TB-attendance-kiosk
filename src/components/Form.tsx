@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from "react";
 
 interface FormProps {
+    isUnlocked: boolean;
     isActive: boolean;
+    onUnlock: (pin: string) => Promise<boolean>;
     onSuccess: (name: string) => void;
-    onWrongBarcode: () => void;
 }
 
 function isDigit(c: string) {
     return c >= "0" && c <= "9";
 }
 
-export default function Form({ isActive, onSuccess, onWrongBarcode }: FormProps) {
-    const [idNumber, setIDNumber] = useState("");
+export default function Form({ isUnlocked, isActive, onUnlock, onSuccess }: FormProps) {
+    const [value, setValue] = useState("");
     const [isLastInputFromNumpad, setIsLastInputFromNumpad] = useState(false);
     const [lastShakeTime, setLastShakeTime] = useState(null);
     const [isShaking, setIsShaking] = useState(false);
@@ -20,7 +21,7 @@ export default function Form({ isActive, onSuccess, onWrongBarcode }: FormProps)
 
     function handleNumpadButtonClick(e: React.MouseEvent<HTMLButtonElement>) {
         const value = e.currentTarget.value;
-        setIDNumber(idNumber + value);
+        setValue(current => current + value);
         setIsLastInputFromNumpad(true);
     }
 
@@ -34,7 +35,7 @@ export default function Form({ isActive, onSuccess, onWrongBarcode }: FormProps)
         if (backspaceDownTime === null) {
             return;
         }
-        setIDNumber(idNumber.slice(0, -1));
+        setValue(current => current.slice(0, -1));
         setBackspaceDownTime(null);
     }
 
@@ -46,14 +47,14 @@ export default function Form({ isActive, onSuccess, onWrongBarcode }: FormProps)
     function handleChangeFromKeyboardInput(e: React.ChangeEvent<HTMLInputElement>) {
         const value = e.target.value;
         if (isLastInputFromNumpad && (e.nativeEvent as InputEvent).inputType === "deleteContentBackward") {
-            setIDNumber("");
+            setValue("");
         } else if (value.length === 0) {
-            setIDNumber("")
+            setValue("");
         } else if (isDigit(value[value.length - 1])) {
             if (isLastInputFromNumpad) {
-                setIDNumber(value[value.length - 1]);
+                setValue(value[value.length - 1]);
             } else {
-                setIDNumber(value);
+                setValue(value);
             }
             setIsLastInputFromNumpad(false);
         }
@@ -61,19 +62,21 @@ export default function Form({ isActive, onSuccess, onWrongBarcode }: FormProps)
 
     async function handleSubmit(event: React.FormEvent) {
         event.preventDefault();
-        if (idNumber.length !== 9) {
-            if (idNumber.length == 13) {
-                setIDNumber("");
-                onWrongBarcode();
+        if (!isUnlocked || value.length !== 9) {
+            const success = await onUnlock(value);
+            if (!success) {
+                setValue("");
+                setLastShakeTime(new Date());
+                return;
             }
-            setLastShakeTime(new Date());
+            setValue("");
             return;
         }
-        const response = await window.electron.submit(idNumber);
+        const response = await window.electron.submit(value);
         if (!response.success) {
             return;
         }
-        setIDNumber("");
+        setValue("");
         onSuccess(response.name);
     }
 
@@ -107,20 +110,21 @@ export default function Form({ isActive, onSuccess, onWrongBarcode }: FormProps)
         if (backspaceDownTime === null) {
             return;
         }
-        const timeout = setTimeout(() => setIDNumber(""), 500);
+        const timeout = setTimeout(() => setValue(""), 500);
         return () => clearTimeout(timeout);
     }, [backspaceDownTime]);
 
     return <div>
         <form onSubmit={handleSubmit}>
             <input
-                type="text"
+                type={isUnlocked ? "text" : "password"}
                 name="id-number"
                 className={"id-number-input" + (isShaking ? " shake" : "")}
-                value={idNumber}
+                value={value}
                 onChange={handleChangeFromKeyboardInput}
                 onBlur={handleBlur}
-                autoFocus />
+                autoFocus
+                disabled={!isActive} />
         </form>
         <div className="numpad">
             {Array.from({length: 9}, (_, i) => (
@@ -152,7 +156,7 @@ export default function Form({ isActive, onSuccess, onWrongBarcode }: FormProps)
                 onClick={handleSubmit}
                 onPointerDown={handleButtonActive}
                 onPointerUp={handleButtonInactive}
-                onPointerLeave={handleButtonInactive}>⏎</button>
+                onPointerLeave={handleButtonInactive}>{isUnlocked ? "⏎" : "Unlock"}</button>
         </div>
     </div>;
 }

@@ -18,9 +18,10 @@
 }
 
 body {
+  --brand-green: #247c28;
   margin: 0 1.5rem;
   background-color: white;
-  color: red;
+  color: var(--brand-green);
   text-align: center;
 }
 
@@ -45,24 +46,97 @@ body, input, button {
   margin: 1rem 0;
 }
 
-.logo-stack {
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.panel-toggle-button {
+  border: 1px solid var(--brand-green);
+  color: var(--brand-green);
+  background: white;
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.panel-toggle-button:disabled {
+  opacity: 0.45;
+}
+
+.terrorbytes-logo {
   height: 225px;
   margin: 1rem auto 0;
   display: grid;
   place-items: center;
-}
-
-.logo-layer {
-  grid-area: 1 / 1;
-  height: 225px;
-  opacity: 0;
-  transition: opacity 750ms ease-in-out;
+  background: transparent;
+  border: 0;
   user-select: none;
   -webkit-user-drag: none;
 }
 
-.logo-layer.active {
-  opacity: 1;
+.terrorbytes-logo-image {
+  max-width: 260px;
+  max-height: 225px;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.attendance-roster {
+  height: 225px;
+  margin: 1rem auto 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  max-width: 330px;
+  border: 1px solid rgba(36, 124, 40, 0.25);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.attendance-roster-header {
+  padding: 0.75rem 0.9rem 0.5rem;
+  border-bottom: 1px solid rgba(36, 124, 40, 0.18);
+}
+
+.attendance-roster-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.attendance-roster-header p {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+}
+
+.attendance-roster-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.attendance-roster-item {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid rgba(36, 124, 40, 0.1);
+}
+
+.attendance-roster-name {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.attendance-roster-time,
+.attendance-roster-empty {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.attendance-roster-empty {
+  padding: 0.9rem;
 }
 
 .date {
@@ -74,7 +148,7 @@ body, input, button {
 .time {
   font-size: 2rem;
   font-variant-numeric: tabular-nums;
-  color: red;
+  color: var(--brand-green);
   margin-top: 0;
 }
 
@@ -103,6 +177,11 @@ body, input, button {
   outline-width: 0;
 }
 
+.id-number-input:disabled {
+  background: #f2f2f2;
+  color: #777;
+}
+
 .numpad {
   width: 80%;
   margin: 0 auto;
@@ -121,10 +200,28 @@ body, input, button {
   }
 
   button.active {
-    background-color: red;
+    background-color: var(--brand-green);
     color: white;
     transition: all 0.1s ease-out;
   }
+}
+
+.pin-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.pin-panel h2 {
+  margin: 0;
+}
+
+.pin-instructions {
+  margin: 0;
+  font-size: 1rem;
+  white-space: normal;
 }
 
 .footer {
@@ -132,13 +229,23 @@ body, input, button {
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: red;
+  background-color: var(--brand-green);
   color: white;
   transition: all 0.25s ease-in;
 }
 
+.source-credit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4.1rem;
+  margin: 0;
+  color: #555;
+  font-size: 0.75rem;
+}
+
 .footer.ok {
-  background-color: green;
+  background-color: var(--brand-green);
   transition: all 0.1s ease-out;
 }
 
@@ -211,7 +318,7 @@ body, input, button {
   }
 
   button:enabled:active {
-    background-color: red;
+    background-color: var(--brand-green);
     color: white;
     transition: all 0.1s ease-out;
   }

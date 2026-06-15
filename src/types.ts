@@ -10,3 +10,10 @@ export interface EnabledActions {
     sendReportEmail: boolean;
     backupDBToS3: boolean;
 }
+
+export interface CurrentAttendanceEntry {
+    idNumber: string;
+    firstName: string;
+    lastName: string;
+    checkinTime: string;
+}

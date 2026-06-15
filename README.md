@@ -1,33 +1,21 @@
-StuyPulse Attendance Kiosk
-==========================
+TerrorBytes Attendance Kiosk
+============================
 
 Attendance kiosk for robotics meetings. Designed for the Raspberry Pi 7" touchscreen (800x480 resolution). Built with
 Electron and React.
 
 ![Screenshot of app](docs/images/screenshot.png)
 
-## Exporting reports
+## PIN Lock
 
-Attendance data is stored locally on the device in a SQLite database. To export attendance reports, insert a USB drive
-and long press on the 694 logo. The following report types are available:
-
-- **Attendance Report** - Number of meetings attended, attendance rate, number of checkouts, checkout rate, and average
-  and total time spent at meetings for each student
-- **Meeting Report** - Total unique checkins and checkout rate for each meeting day
-- **Checkin Data** - Checkin/checkout times and total time spent at meeting for each student on each meeting day
-  (basically raw swipe data grouped by student and day)
-
-Each of these reports is filtered by the specified date range and meeting threshold. The meeting threshold is the number
-of unique checkins required for a given day to be considered a meeting. This prevents presumably unofficial meetings
-from skewing the statistics.
-
-A student counts as having checked out on a given day if their first and last swipes on that day are more than 30
-minutes apart. This is to prevent multiple checkins in quick succession but no actual checkout (e.g. if the student
-forgot if they already swiped in and swiped in again) from bringing down the student's average time spent at meetings.
+The kiosk starts locked. Enter the kiosk PIN on the touchscreen to enable NFC scanning. By default the code uses
+`ATTENDANCE_KIOSK_PIN`, and if that environment variable is not set it falls back to `694694`.
 
 ## Importing Student Names
 
-Students are stored in the database using their unique 9-digit ID number, but their names can be imported using a .csv file. It should follow the provided format below, including the necessary header.
+Students are stored in the database using their unique 9-digit ID number. Program each NFC sticker to emit that 9-digit ID, followed by Enter, so tapping the sticker submits the same value a student could type manually.
+
+Student names can be imported using a .csv file. It should follow the provided format below, including the necessary header.
 
     id_number,first_name,last_name
     123456789,John,Doe
@@ -110,6 +98,7 @@ AWS_REGION="..." \
 REPORT_EMAIL_TO_ADDRESS="..." \
 BACKUP_S3_BUCKET="..." \
 BACKUP_S3_PREFIX="..." \
+ATTENDANCE_KIOSK_PIN="..." \
 attendance-kiosk --kiosk >> /var/log/attendance-kiosk/out.log 2>> /var/log/attendance-kiosk/err.log
 ```
 

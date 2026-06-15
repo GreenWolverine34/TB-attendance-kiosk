@@ -12,6 +12,7 @@ import {
     generateAttendanceReport,
     generateCheckinData,
     generateMeetingReport,
+    getCurrentAttendance,
     getStatsForDate,
     isMeetingDate,
     MEETING_THRESHOLD,
@@ -34,6 +35,7 @@ if (require("electron-squirrel-startup")) {
 }
 
 const DB_PATH = path.join(app.getPath("userData"), "data.db");
+const KIOSK_PIN = process.env.ATTENDANCE_KIOSK_PIN || "PUT_PIN_HERE_AND_DON'T_COMMIT";
 
 (async () => {
     const db = await open({
@@ -146,6 +148,10 @@ const createWindow = async () => {
 
     const slackClient = new WebClient(process.env.SLACK_TOKEN);
 
+    ipcMain.handle("unlockWithPin", async (_, pin) => {
+        return { success: pin === KIOSK_PIN };
+    });
+
     ipcMain.handle("submit", async (_, idNumber) => {
         try {
             const [, student] = await Promise.all([
@@ -172,6 +178,15 @@ const createWindow = async () => {
             return await getStatsForDate(db, getToday());
         } catch (err) {
             dialog.showErrorBox("Error", err.toString());
+        }
+    });
+
+    ipcMain.handle("getCurrentAttendance", async () => {
+        try {
+            return await getCurrentAttendance(db, getToday());
+        } catch (err) {
+            dialog.showErrorBox("Error", err.toString());
+            return [];
         }
     });
 

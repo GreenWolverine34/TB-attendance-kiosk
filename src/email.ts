@@ -34,9 +34,9 @@ Checkout rate: ${todaysStats.checkoutRatePercent.toFixed(2)}%
 Attached are the attendance reports for the period ${startDate} to ${today}.`;
     const html = text.replace(/\n/g, "<br>");
     const toAddress = process.env.REPORT_EMAIL_TO_ADDRESS;
-    const fromName = "StuyPulse Attendance Kiosk";
+    const fromName = "TerrorBytes Attendance Kiosk";
     const fromAddress = "no-reply@stuypulse.com";
-    const subject = `StuyPulse Attendance Reports - ${today}`;
+    const subject = `TerrorBytes Attendance Reports - ${today}`;
 
     const boundaryMixed = `----=_Boundary_Mixed_${Date.now()}`;
     const boundaryAlt = `----=_Boundary_Alt_${Date.now()}`;

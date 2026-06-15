@@ -1,13 +1,15 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 import { contextBridge, ipcRenderer } from "electron";
-import { TodaysStats, EnabledActions } from "./types";
+import { TodaysStats, EnabledActions, CurrentAttendanceEntry } from "./types";
 
 declare global {
     interface Window {
         electron: {
             submit: (idNumber: string) => Promise<{ success: boolean, name?: string }>;
+            unlockWithPin: (pin: string) => Promise<{ success: boolean }>;
             getTodaysStats: () => Promise<TodaysStats>;
+            getCurrentAttendance: () => Promise<CurrentAttendanceEntry[]>;
             getEnabledActions: () => Promise<EnabledActions>;
             exportAttendanceReport: (startDate: string, endDate: string, meetingThreshold: number, sendToSlack: boolean) => void;
             exportMeetingReport: (startDate: string, endDate: string, meetingThreshold: number, sendToSlack: boolean) => void;
@@ -22,7 +24,9 @@ declare global {
 
 contextBridge.exposeInMainWorld("electron", {
     submit: (idNumber: string) => ipcRenderer.invoke("submit", idNumber),
+    unlockWithPin: (pin: string) => ipcRenderer.invoke("unlockWithPin", pin),
     getTodaysStats: () => ipcRenderer.invoke("getTodaysStats"),
+    getCurrentAttendance: () => ipcRenderer.invoke("getCurrentAttendance"),
     getEnabledActions: () => ipcRenderer.invoke("getEnabledActions"),
     exportAttendanceReport: (startDate: string, endDate: string, meetingThreshold: number, sendToSlack: boolean) =>
         ipcRenderer.send("exportAttendanceReport", startDate, endDate, meetingThreshold, sendToSlack),

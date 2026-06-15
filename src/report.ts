@@ -1,7 +1,7 @@
 import { Database } from "sqlite";
-import { TodaysStats } from "./types";
+import { CurrentAttendanceEntry, TodaysStats } from "./types";
 
-// Time between the first and last swipe of a day to consider a student to have checked out
+// Time between the first and last tap of a day to consider a student to have checked out
 export const MIN_CHECKOUT_TIME_S = 1800;
 
 // Meeting threshold to use for automated reports
@@ -197,4 +197,20 @@ export async function getStatsForDate(db: Database, date: string): Promise<Today
         numCheckouts: result.numCheckouts,
         checkoutRatePercent: result.checkoutRatePercent,
     };
+}
+
+export async function getCurrentAttendance(db: Database, date: string): Promise<CurrentAttendanceEntry[]> {
+    return db.all(`
+        SELECT checkin.idNumber,
+               ifnull(student.firstName, '') AS firstName,
+               ifnull(student.lastName, '') AS lastName,
+               min(timestamp) AS checkinTime
+        FROM checkin
+        LEFT JOIN student ON checkin.idNumber = student.idNumber
+        WHERE date(timestamp) = :date
+        GROUP BY checkin.idNumber
+        ORDER BY min(timestamp) ASC
+    `, {
+        ":date": date,
+    });
 }
