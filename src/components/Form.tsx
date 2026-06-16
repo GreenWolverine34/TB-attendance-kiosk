@@ -73,12 +73,17 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: F
       setValue(""); 
       return; 
     } 
+    
     const response = await window.electron.submit(value); 
     if (!response.success) { 
       return; 
     } 
+    
     setValue(""); 
-    onSuccess(response.name); 
+    
+    // FIXED: Fall back to showing the input ID number string if the database name is empty
+    const clientName = response.name || `ID #${value}`;
+    onSuccess(clientName); 
   } 
 
   function handleBlur(e: React.FocusEvent<HTMLInputElement>) { 
@@ -139,45 +144,41 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: F
             onClick={handleNumpadButtonClick} 
             onPointerDown={handleButtonActive} 
             onPointerUp={handleButtonInactive} 
-            onPointerLeave={handleButtonInactive}
-          >
-            {i + 1}
+            onPointerLeave={handleButtonInactive} 
+          > 
+            {i + 1} 
           </button> 
         ))} 
-        
         <button 
           value="backspace" 
           className={activeButton === "backspace" ? "active" : ""} 
           onPointerDown={handleBackspaceDown} 
           onPointerUp={handleBackspaceUp} 
-          onPointerLeave={handleBackspaceLeave}
-        >
-          ⌫
+          onPointerLeave={handleBackspaceLeave} 
+        > 
+          ⌫ 
         </button> 
-        
         <button 
           value="0" 
           className={activeButton === "0" ? "active" : ""} 
           onClick={handleNumpadButtonClick} 
           onPointerDown={handleButtonActive} 
           onPointerUp={handleButtonInactive} 
-          onPointerLeave={handleButtonInactive}
-        >
-          0
+          onPointerLeave={handleButtonInactive} 
+        > 
+          0 
         </button> 
-        
-        {/* FIXED: Submit button is locked to display the return symbol '⏎' in both states */}
         <button 
           value="submit" 
           className={activeButton === "submit" ? "active" : ""} 
           onClick={(e) => handleSubmit(e)} 
           onPointerDown={handleButtonActive} 
           onPointerUp={handleButtonInactive} 
-          onPointerLeave={handleButtonInactive}
-        >
-          ⏎
+          onPointerLeave={handleButtonInactive} 
+        > 
+          ⏎ 
         </button> 
       </div> 
-    </div>
+    </div> 
   ); 
 }
