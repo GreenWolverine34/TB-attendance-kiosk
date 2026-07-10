@@ -9,9 +9,15 @@ Electron and React.
 ## PIN Lock
 
 The kiosk starts locked. Enter the attendance PIN on the touchscreen to enable NFC scanning. Enter the export PIN to
-open the report/export modal. Locking attendance with the attendance PIN also sends the configured report email if
-email delivery is enabled. By default the attendance PIN uses `ATTENDANCE_KIOSK_PIN` and falls back to `694694`;
+open the report/export modal. By default the attendance PIN uses `ATTENDANCE_KIOSK_PIN` and falls back to `4561`;
 set `ATTENDANCE_EXPORT_PIN` for the export path.
+
+## Exports
+
+Reports can leave the kiosk only through a USB stick or a trusted Bluetooth device. Opening the export menu makes the
+Pi discoverable and pairable. Pair an export device from its Bluetooth settings, refresh the paired-device list in the
+export menu, and select `Trust`. Multiple trusted devices can be retained; their list is stored locally in Electron's
+user-data directory as `trusted-export-devices.json`.
 
 ## Importing Student Names
 
@@ -47,7 +53,7 @@ The package for the Raspberry Pi will be written to `out/make/deb/arm64/attendan
 ## Raspberry Pi setup
 
 Install the latest Raspberry Pi OS onto a microSD card using the Raspberry Pi Imager, then insert the microSD card into
-the Raspberry Pi and boot. Connect to Wi-Fi.
+the Raspberry Pi and boot. Wi-Fi is not required for the kiosk's USB and Bluetooth export workflow.
 
 Upgrade and install packages:
 
@@ -58,8 +64,9 @@ sudo apt-get upgrade
 # Can't go without it
 sudo apt-get install vim
 
-# For debugging the SQLite database
-sudo apt-get install sqlite3
+# For debugging the SQLite database and Bluetooth export
+sudo apt-get install sqlite3 bluez bluez-obexd gnome-bluetooth-sendto
+sudo systemctl enable --now bluetooth
 ```
 
 Add the following to `/boot/firmware/config.txt` to enable charging the real-time clock battery (if applicable):
@@ -93,13 +100,6 @@ Add the following to `~/.config/labwc/autostart` to autostart the attendance kio
 variables accordingly:
 
 ```bash
-SLACK_TOKEN="..." \
-SLACK_EXPORT_USER_ID="..." \
-MYPULSE_API_KEY="..." \
-AWS_REGION="..." \
-REPORT_EMAIL_TO_ADDRESS="..." \
-BACKUP_S3_BUCKET="..." \
-BACKUP_S3_PREFIX="..." \
 ATTENDANCE_KIOSK_PIN="..." \
 ATTENDANCE_EXPORT_PIN="..." \
 attendance-kiosk --kiosk >> /var/log/attendance-kiosk/out.log 2>> /var/log/attendance-kiosk/err.log
