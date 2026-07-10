@@ -89,11 +89,11 @@ Install the attendance kiosk package:
 sudo dpkg -i attendance-kiosk_1.0.0_arm64.deb
 ```
 
-Set up log directory (assuming the default user is `stuy694`):
+Set up log directory (assuming the default user is `terrorbytes`):
 
 ```bash
 sudo mkdir /var/log/attendance-kiosk
-sudo chown stuy694:stuy694 /var/log/attendance-kiosk
+sudo chown terrorbytes:terrorbytes /var/log/attendance-kiosk
 ```
 
 Add the following to `~/.config/labwc/autostart` to autostart the attendance kiosk on boot, filling in the environment
