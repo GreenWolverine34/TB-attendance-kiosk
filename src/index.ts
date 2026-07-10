@@ -173,11 +173,11 @@ const createWindow = async () => {
     const temporaryFilePath = path.join(app.getPath("temp"), filename);
     await fs.promises.writeFile(temporaryFilePath, data);
     try {
-      await sendFileToBluetoothDevice(device, temporaryFilePath);
-      return { success: true, message: `${reportName} sent to ${device.name}` };
-    } finally {
-      await fs.promises.unlink(temporaryFilePath).catch(() => undefined);
-    }
+        await sendFileToBluetoothDevice(device, temporaryFilePath);
+        return { success: true, message: `${reportName} sent to ${device.name}` };
+      } finally {
+        await fs.promises.unlink(temporaryFilePath).catch(() => {});
+      }
   }
 
   async function handleReportExport(
