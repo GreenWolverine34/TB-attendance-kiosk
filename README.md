@@ -1,8 +1,7 @@
 TerrorBytes Attendance Kiosk
 ============================
 
-Attendance kiosk for robotics meetings. Designed for the Raspberry Pi 7" touchscreen (800x480 resolution) and for the newer, Raspbeery Pi touchscreen 2 (HD resolution). Built with
-Electron and React.
+Attendance kiosk for robotics meetings. Designed for the Raspberry Pi 7" touchscreen (800x480 resolution) and for the newer, Raspberry Pi touchscreen 2 (HD resolution). Built with Electron and React.
 
 ![Screenshot of app](docs/images/screenshot.png)
 
