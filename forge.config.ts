@@ -16,12 +16,7 @@ const config: ForgeConfig = {
   rebuildConfig: {},
   makers: [
     new MakerZIP({}, ['darwin']),
-    new MakerDeb({
-      options: {
-        maintainer: 'Kabir Kaul',
-        homepage: 'https://github.com/GreenWolverine34/TB-attendance-kiosk/'
-      }
-    }),
+    new MakerDeb({}),
   ],
   plugins: [
     new AutoUnpackNativesPlugin({}),
