@@ -31,7 +31,7 @@
     overflow: hidden; 
   } 
   
-  body, input, button, select {
+  body, input, button { 
     font-family: 'Inter', sans-serif; 
   } 
   
@@ -279,7 +279,7 @@
     .today-stats { margin: 0 1rem; } 
     label { font-size: 1rem; } 
     
-    input, button, select {
+    input, button { 
       font-size: 1rem; 
       border-radius: 8px; 
       border: 1px solid grey; 
@@ -298,20 +298,6 @@
     #meeting-threshold::-webkit-outer-spin-button, #meeting-threshold::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } 
     .meeting-threshold-button { width: 50px; margin: 0 0.5rem; } 
     .modal-submit-button { margin: 0.25rem; } 
-    .destination-options { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.35rem; }
-    .destination-options input[type="radio"] { margin-left: 0.5rem; }
-    .bluetooth-status { min-height: 1.25rem; margin-top: 0.75rem; color: var(--brand-green); font-weight: 600; }
-    .bluetooth-section { margin-top: 0.5rem; border-top: 1px solid #d4d4d4; padding-top: 0.75rem; }
-    .bluetooth-controls { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
-    .bluetooth-controls select { max-width: 260px; }
-    .bluetooth-device-list { margin: 0.65rem auto 0; max-width: 620px; text-align: left; }
-    .bluetooth-list-heading { font-weight: 700; margin-bottom: 0.25rem; }
-    .bluetooth-device-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 0.5rem; padding: 0.3rem 0; border-top: 1px solid #ececec; }
-    .bluetooth-device-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .bluetooth-device-row code { color: #555; font-size: 0.8rem; }
-    .bluetooth-empty-state { color: #666; padding: 0.3rem 0; }
-    .trusted-device-label { color: var(--brand-green); font-weight: 600; }
-    .report-actions { margin-bottom: 2rem; }
     .build-footer { position: absolute; bottom: 0; left: 50%; transform: translate(-50%, -50%); width: 100%; font-size: 0.75rem; } 
   } 
   
@@ -320,3 +306,4 @@
   .ReactModal__Overlay--before-close { opacity: 0; } 
   .focus-modal { padding: 0; } 
   .focus-modal-content { height: 100%; display: flex; justify-content: center; align-items: center; }
+  

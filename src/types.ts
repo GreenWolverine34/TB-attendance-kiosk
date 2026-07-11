@@ -4,6 +4,13 @@ export interface TodaysStats {
     checkoutRatePercent: number;
 }
 
+export interface EnabledActions {
+    sendToSlack: boolean;
+    syncToMyPulse: boolean;
+    sendReportEmail: boolean;
+    backupDBToS3: boolean;
+}
+
 export interface CurrentAttendanceEntry {
     idNumber: string;
     firstName: string;
@@ -12,16 +19,3 @@ export interface CurrentAttendanceEntry {
 }
 
 export type AdminCodeAction = "attendance" | "export";
-
-export interface BluetoothDevice {
-    address: string;
-    name: string;
-}
-
-export type ExportDestination = "usb" | "bluetooth";
-
-export interface ExportResult {
-    success: boolean;
-    cancelled?: boolean;
-    message?: string;
-}

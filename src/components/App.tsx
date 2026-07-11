@@ -5,7 +5,7 @@ import Form from "./Form";
 import Logo from "./Logo";
 import ExportModal from "./ExportModal";
 import Modal from "react-modal";
-import { AdminCodeAction, CurrentAttendanceEntry } from "../types";
+import { AdminCodeAction, CurrentAttendanceEntry, EnabledActions } from "../types";
 
 const PROMPT_SCAN = "Tap your NFC sticker on reader or enter PIN";
 const PROMPT_LOCKED = "Enter attendance PIN to unlock scanning";
@@ -13,6 +13,7 @@ const PROMPT_WRONG_PIN = "Wrong PIN — try again";
 const PROMPT_CLOSE_ERROR = "Could not close attendance";
 const PROMPT_SUCCESS = "Check-in recorded";
 const PROMPT_CLOSED = "Attendance closed";
+const PROMPT_CLOSED_EMAIL = "Attendance closed and email sent";
 const PROMPT_EXPORT = "Export reports";
 
 export default function App() {
@@ -23,6 +24,12 @@ export default function App() {
   const [showRoster, setShowRoster] = useState(false);
   const [attendance, setAttendance] = useState<CurrentAttendanceEntry[]>([]);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [enabledActions, setEnabledActions] = useState<EnabledActions>({
+    sendToSlack: false,
+    syncToMyPulse: false,
+    sendReportEmail: false,
+    backupDBToS3: false,
+  });
 
   function handleSubmit(name: string) {
     setPromptText(name ? `${name} clocked in` : PROMPT_SUCCESS);
@@ -53,7 +60,9 @@ export default function App() {
         return null;
       }
       setPromptText(
-        closeResponse.numClosed > 0 ? `${PROMPT_CLOSED} — ${closeResponse.numClosed} checked out` : PROMPT_CLOSED,
+        closeResponse.emailed
+          ? (closeResponse.numClosed > 0 ? `${PROMPT_CLOSED_EMAIL} — ${closeResponse.numClosed} checked out` : PROMPT_CLOSED_EMAIL)
+          : (closeResponse.numClosed > 0 ? `${PROMPT_CLOSED} — ${closeResponse.numClosed} checked out` : PROMPT_CLOSED),
       );
     }
     setIsUnlocked(nextUnlocked);
@@ -100,6 +109,7 @@ export default function App() {
     const handleBlur = () => setHasFocus(false);
     window.addEventListener("focus", handleFocus);
     window.addEventListener("blur", handleBlur);
+    window.electron.getEnabledActions().then(setEnabledActions);
     return () => {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("blur", handleBlur);
@@ -170,7 +180,7 @@ export default function App() {
         <span className="prompt">{promptText}</span>
       </div>
 
-      <ExportModal isOpen={exportModalOpen} onClose={handleCloseExportModal} />
+      <ExportModal isOpen={exportModalOpen} onClose={handleCloseExportModal} enabledActions={enabledActions} />
     </>
   );
 }
