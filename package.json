@@ -44,14 +44,14 @@
   },
   "keywords": [],
   "author": {
-    "name": "Kevin Wang",
-    "email": "kevin@kevinwang.com"
+    "name": "Kabir Kaul",
+    "email": "kaulkabir@gmail.com"
   },
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.758.0",
     "@aws-sdk/client-ses": "^3.916.0",
-    "@slack/web-api": "^7.4.0",
+    "@slack/web-api": "^7.19.0",
     "@types/node-schedule": "^2.1.7",
     "csv-parse": "^5.6.0",
     "electron-squirrel-startup": "^1.0.1",
