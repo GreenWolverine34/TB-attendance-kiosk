@@ -20,8 +20,8 @@ Students are stored in the database using their unique 10-digit ID number. Progr
 Student names can be imported using a .csv file. It should follow the provided format below, including the necessary header.
 
     id_number,first_name,last_name
-    1234567890,John,Doe
-    6946946946,Jane,Doe
+    1234567890, def_firstname, def_lastname
+    4561456100, terrorbytes, people
 
 ## Development
 
