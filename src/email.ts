@@ -10,21 +10,27 @@ import {
 } from "./report";
 import { uploadReportsToSheet } from "./sheets";
 
-export async function sendReportEmail(db: Database) {
+export async function sendReportEmail(db: Database, reportType?: "attendance" | "meeting" | "checkin" | "all") {
   const startDate = getStartDate();
   const today = getToday();
 
-  const [
-    attendanceReport,
-    meetingReport,
-    checkinData,
-    todaysStats,
-  ] = await Promise.all([
-    generateAttendanceReport(db, startDate, today, MEETING_THRESHOLD),
-    generateMeetingReport(db, startDate, today, MEETING_THRESHOLD),
-    generateCheckinData(db, startDate, today, MEETING_THRESHOLD),
-    getStatsForDate(db, today),
-  ]);
+  // Always fetch stats for the email body
+  const todaysStats = await getStatsForDate(db, today);
+
+  // Generate only requested reports
+  let attendanceReport = "";
+  let meetingReport = "";
+  let checkinData = "";
+
+  if (!reportType || reportType === "all" || reportType === "attendance") {
+    attendanceReport = await generateAttendanceReport(db, startDate, today, MEETING_THRESHOLD);
+  }
+  if (!reportType || reportType === "all" || reportType === "meeting") {
+    meetingReport = await generateMeetingReport(db, startDate, today, MEETING_THRESHOLD);
+  }
+  if (!reportType || reportType === "all" || reportType === "checkin") {
+    checkinData = await generateCheckinData(db, startDate, today, MEETING_THRESHOLD);
+  }
 
   const text = `Attendance summary of today's meeting\n\nCheckins: ${todaysStats.numCheckins}\nCheckouts: ${todaysStats.numCheckouts}\nCheckout rate: ${todaysStats.checkoutRatePercent.toFixed(2)}%\n\nAttached are the attendance reports for the period ${startDate} to ${today}.`;
   const html = text.replace(/\n/g, "<br>");
@@ -35,7 +41,7 @@ export async function sendReportEmail(db: Database) {
   // Optionally upload reports to Google Sheets if configuration is present
   if (process.env.GOOGLE_SHEET_ID) {
     try {
-      await uploadReportsToSheet(attendanceReport, meetingReport, checkinData);
+      await uploadReportsToSheet(attendanceReport || "", meetingReport || "", checkinData || "");
       console.log("Reports uploaded to Google Sheet");
     } catch (sheetErr) {
       console.error("Failed to upload reports to Google Sheet:", sheetErr);
@@ -52,26 +58,24 @@ export async function sendReportEmail(db: Database) {
   });
 
   try {
+    const attachments: any[] = [];
+    if (attendanceReport && attendanceReport.length > 0) {
+      attachments.push({ filename: getTimestampedFilename("attendance-report", "csv"), content: attendanceReport });
+    }
+    if (meetingReport && meetingReport.length > 0) {
+      attachments.push({ filename: getTimestampedFilename("meeting-report", "csv"), content: meetingReport });
+    }
+    if (checkinData && checkinData.length > 0) {
+      attachments.push({ filename: getTimestampedFilename("checkins", "csv"), content: checkinData });
+    }
+
     const info = await transporter.sendMail({
       from: `"TerrorBytes Attendance Kiosk" <${process.env.GMAIL_USER}>`,
       to: toAddress,
       subject: subject,
       text: text,
       html: html,
-      attachments: [
-        {
-          filename: getTimestampedFilename("attendance-report", "csv"),
-          content: attendanceReport, // Nodemailer converts strings/buffers automatically
-        },
-        {
-          filename: getTimestampedFilename("meeting-report", "csv"),
-          content: meetingReport,
-        },
-        {
-          filename: getTimestampedFilename("checkins", "csv"),
-          content: checkinData,
-        },
-      ],
+      attachments,
     });
 
     console.log("Email sent successfully! Message ID:", info.messageId);
