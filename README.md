@@ -95,11 +95,9 @@ variables accordingly:
 ```bash
 SLACK_TOKEN="..." \
 SLACK_EXPORT_USER_ID="..." \
-MYPULSE_API_KEY="..." \
-AWS_REGION="..." \
 REPORT_EMAIL_TO_ADDRESS="..." \
-BACKUP_S3_BUCKET="..." \
-BACKUP_S3_PREFIX="..." \
+GMAIL_USER="..." \
+GMAIL_APP_PASS="..." \
 ATTENDANCE_KIOSK_PIN="..." \
 ATTENDANCE_EXPORT_PIN="..." \
 attendance-kiosk --kiosk >> /var/log/attendance-kiosk/out.log 2>> /var/log/attendance-kiosk/err.log

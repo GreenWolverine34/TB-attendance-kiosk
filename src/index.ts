@@ -54,7 +54,8 @@ async function initDB(): Promise<Database> {
 
 const enabledActions: EnabledActions = {
     sendToSlack: process.env.SLACK_TOKEN !== undefined && process.env.SLACK_EXPORT_USER_ID !== undefined,
-    sendReportEmail: process.env.AWS_REGION !== undefined && process.env.REPORT_EMAIL_TO_ADDRESS !== undefined,
+    // Use Nodemailer (Gmail) for report email delivery. Require Gmail credentials and a destination address.
+    sendReportEmail: process.env.GMAIL_USER !== undefined && process.env.GMAIL_APP_PASS !== undefined && process.env.REPORT_EMAIL_TO_ADDRESS !== undefined,
     sendToGoogleSheet: process.env.GOOGLE_SHEET_ID !== undefined && process.env.GOOGLE_SERVICE_ACCOUNT_JSON !== undefined,
 };
 

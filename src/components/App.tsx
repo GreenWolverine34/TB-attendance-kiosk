@@ -26,9 +26,8 @@ export default function App() {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [enabledActions, setEnabledActions] = useState<EnabledActions>({
     sendToSlack: false,
-    syncToMyPulse: false,
     sendReportEmail: false,
-    backupDBToS3: false,
+    sendToGoogleSheet: false,
   });
 
   function handleSubmit(name: string) {
