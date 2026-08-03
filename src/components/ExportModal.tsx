@@ -128,16 +128,14 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                     <button
                         name="action-sync-google"
                         className="modal-submit-button main-action"
-                        type="submit"
-                        disabled={!enabledActions.sendToGoogleSheet}>
+                        type="submit">
                         Sync to Google Sheets
                     </button>
 
                     <button
                         name="action-send-email"
                         className="modal-submit-button main-action"
-                        type="submit"
-                        disabled={!enabledActions.sendReportEmail}>
+                        type="submit">
                         Send Report Email
                     </button>
                 </div>

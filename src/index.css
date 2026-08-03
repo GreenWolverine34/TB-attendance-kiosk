@@ -298,8 +298,65 @@
     #meeting-threshold::-webkit-outer-spin-button, #meeting-threshold::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } 
     .meeting-threshold-button { width: 50px; margin: 0 0.5rem; } 
     .modal-submit-button { margin: 0.25rem; } 
-    .build-footer { position: absolute; bottom: 0; left: 50%; transform: translate(-50%, -50%); width: 100%; font-size: 0.75rem; } 
-  } 
+
+  /* Two-column layout for export modal actions and report types */
+  .two-column { 
+    display: flex; 
+    flex-direction: row; 
+    gap: 1rem; 
+    align-items: flex-start; 
+    justify-content: center;
+  }
+
+  .two-column .column { 
+    flex: 1 1 0; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: stretch; 
+    justify-content: flex-start; 
+  }
+
+  .actions-column { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 0.5rem; 
+    align-items: center; 
+  }
+
+  .actions-column .main-action { 
+    width: 220px; 
+    padding: 0.6rem 0.9rem; 
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .reports-column { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 0.5rem; 
+    align-items: center; 
+  }
+
+  .report-option { 
+    width: 220px; 
+  }
+
+  .report-select { 
+    width: 100%; 
+    text-align: center; 
+    cursor: pointer; 
+    background: #f6f6f6; 
+    border: 1px solid #cfcfcf; 
+  }
+
+  .report-option.selected .report-select { 
+    background: var(--brand-green); 
+    color: white; 
+    border-color: var(--brand-green);
+  }
+
+  .build-footer { position: absolute; bottom: 0; left: 50%; transform: translate(-50%, -50%); width: 100%; font-size: 0.75rem; } 
+  }
   
   .ReactModal__Overlay { opacity: 0; transition: opacity 250ms ease-in-out; } 
   .ReactModal__Overlay--after-open { opacity: 1; } 
