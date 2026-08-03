@@ -20,7 +20,6 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
     const [startDate, setStartDate] = useState(defaultStartDate);
     const [endDate, setEndDate] = useState(defaultEndDate);
     const [sendToSlack, setSendToSlack] = useState(true);
-    const [sendToSlack, setSendToSlack] = useState(true);
     const [numCheckinsToday, setNumCheckinsToday] = useState(0);
     const [numCheckoutsToday, setNumCheckoutsToday] = useState(0);
     const [checkoutRatePercent, setCheckoutRatePercent] = useState(0);
@@ -134,13 +133,6 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                     className="modal-submit-button"
                     type="submit">
                     Import Students
-                </button>
-                <button
-                    name="sync-to-mypulse"
-                    className="modal-submit-button"
-                    type="submit"
-                    disabled={!enabledActions.syncToMyPulse}>
-                    Sync to MyPulse
                 </button>
                 <button
                     name="sync-google-sheet"
