@@ -19,10 +19,12 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
     const defaultEndDate = getToday();
     const [startDate, setStartDate] = useState(defaultStartDate);
     const [endDate, setEndDate] = useState(defaultEndDate);
-    const [sendToSlack, setSendToSlack] = useState(true);
     const [numCheckinsToday, setNumCheckinsToday] = useState(0);
     const [numCheckoutsToday, setNumCheckoutsToday] = useState(0);
     const [checkoutRatePercent, setCheckoutRatePercent] = useState(0);
+
+    // Selected report type (right-side buttons)
+    const [selectedReportType, setSelectedReportType] = useState<"attendance" | "meeting" | "checkin">("attendance");
 
     function handleModalOpen() {
         const defaultStartDate = getStartDate();
@@ -30,7 +32,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
 
         setStartDate(defaultStartDate);
         setEndDate(defaultEndDate);
-        setSendToSlack(false);
+        setSelectedReportType("attendance");
 
         window.electron.getTodaysStats().then(({ numCheckins, numCheckouts, checkoutRatePercent }) => {
             setNumCheckinsToday(numCheckins);
@@ -43,19 +45,29 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
         e.preventDefault();
         const submitter = (e.nativeEvent as SubmitEvent).submitter;
         const buttonName = (submitter as HTMLButtonElement).name;
-        if (buttonName === "export-attendance-report") {
-            window.electron.exportAttendanceReport(startDate, endDate, 0, sendToSlack);
-        } else if (buttonName === "export-meeting-report") {
-            window.electron.exportMeetingReport(startDate, endDate, 0, sendToSlack);
-        } else if (buttonName === "export-checkin-data") {
-            window.electron.exportCheckinData(startDate, endDate, 0, sendToSlack);
-        } else if (buttonName === "import-students") {
-            window.electron.importStudents();
-        } else if (buttonName === "sync-google-sheet") {
+
+        // Actions (left column)
+        if (buttonName === "action-export-usb") {
+            // Export the currently selected report to USB (sendToSlack = false)
+            if (selectedReportType === "attendance") {
+                window.electron.exportAttendanceReport(startDate, endDate, 0, false);
+            } else if (selectedReportType === "meeting") {
+                window.electron.exportMeetingReport(startDate, endDate, 0, false);
+            } else if (selectedReportType === "checkin") {
+                window.electron.exportCheckinData(startDate, endDate, 0, false);
+            }
+        } else if (buttonName === "action-sync-google") {
             window.electron.syncToGoogleSheet();
-        } else if (buttonName === "send-report-email") {
+        } else if (buttonName === "action-send-email") {
             window.electron.sendReportEmail();
         }
+
+        // Other actions
+        else if (buttonName === "import-students") {
+            window.electron.importStudents();
+        }
+
+        // Note: report-type buttons are handled with onClick (no form submit)
     }
 
     return <Modal
@@ -92,62 +104,75 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                         onChange={(e) => setEndDate(e.target.value)} />
                 </div>
             </div>
+
+            {/* Import Students above the two-column area */}
             <div className="modal-row">
-                <input
-                    type="radio"
-                    id="export-to-file"
-                    name="export-option"
-                    checked={!sendToSlack}
-                    onChange={() => setSendToSlack(false)} />
-                <label htmlFor="export-to-file">Export to USB drive</label>
-                <input
-                    type="radio"
-                    id="send-to-slack"
-                    name="export-option"
-                    disabled={!enabledActions.sendToSlack}
-                    checked={sendToSlack}
-                    onChange={() => setSendToSlack(true)} />
-                <label htmlFor="send-to-slack">Send to Karissa on Slack</label>
-            </div>
-            <div className="modal-row">
-                <button
-                    name="export-attendance-report"
-                    className="modal-submit-button"
-                    type="submit">
-                    Attendance Report
-                </button>
-                <button
-                    name="export-meeting-report"
-                    className="modal-submit-button"
-                    type="submit">
-                    Meeting Report
-                </button>
-                <button
-                    name="export-checkin-data"
-                    className="modal-submit-button"
-                    type="submit">
-                    Check in Data
-                </button>
                 <button
                     name="import-students"
                     className="modal-submit-button"
                     type="submit">
                     Import Students
                 </button>
-                <button
-                    name="sync-google-sheet"
-                    className="modal-submit-button"
-                    type="submit"
-                    disabled={!enabledActions.sendToGoogleSheet}>
-                    Sync to Google Sheets
-                </button>
-                <button
-                    name="send-report-email"
-                    className="modal-submit-button"
-                    type="submit"
-                    disabled={!enabledActions.sendReportEmail}>
-                    Send Report Email
-                </button>
+            </div>
+
+            {/* Two-column layout: left = actions, right = report type selectors */}
+            <div className="modal-row two-column">
+                <div className="column actions-column">
+                    <button
+                        name="action-export-usb"
+                        className="modal-submit-button main-action"
+                        type="submit">
+                        Export to USB Drive
+                    </button>
+
+                    <button
+                        name="action-sync-google"
+                        className="modal-submit-button main-action"
+                        type="submit"
+                        disabled={!enabledActions.sendToGoogleSheet}>
+                        Sync to Google Sheets
+                    </button>
+
+                    <button
+                        name="action-send-email"
+                        className="modal-submit-button main-action"
+                        type="submit"
+                        disabled={!enabledActions.sendReportEmail}>
+                        Send Report Email
+                    </button>
+                </div>
+
+                <div className="column reports-column">
+                    <div className={`report-option ${selectedReportType === "attendance" ? "selected" : ""}`}>
+                        <button
+                            type="button"
+                            className="modal-submit-button report-select"
+                            onClick={() => setSelectedReportType("attendance")}
+                        >
+                            Attendance Report
+                        </button>
+                    </div>
+
+                    <div className={`report-option ${selectedReportType === "meeting" ? "selected" : ""}`}>
+                        <button
+                            type="button"
+                            className="modal-submit-button report-select"
+                            onClick={() => setSelectedReportType("meeting")}
+                        >
+                            Meeting Report
+                        </button>
+                    </div>
+
+                    <div className={`report-option ${selectedReportType === "checkin" ? "selected" : ""}`}>
+                        <button
+                            type="button"
+                            className="modal-submit-button report-select"
+                            onClick={() => setSelectedReportType("checkin")}
+                        >
+                            Check in Data
+                        </button>
+                    </div>
+                </div>
             </div>
         </form>
         <div className="build-footer">
