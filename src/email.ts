@@ -8,6 +8,7 @@ import {
   getStatsForDate,
   MEETING_THRESHOLD,
 } from "./report";
+import { uploadReportsToSheet } from "./sheets";
 
 export async function sendReportEmail(db: Database) {
   const startDate = getStartDate();
@@ -30,6 +31,16 @@ export async function sendReportEmail(db: Database) {
 
   const toAddress = process.env.REPORT_EMAIL_TO_ADDRESS;
   const subject = `TerrorBytes Attendance Reports - ${today}`;
+
+  // Optionally upload reports to Google Sheets if configuration is present
+  if (process.env.GOOGLE_SHEET_ID) {
+    try {
+      await uploadReportsToSheet(attendanceReport, meetingReport, checkinData);
+      console.log("Reports uploaded to Google Sheet");
+    } catch (sheetErr) {
+      console.error("Failed to upload reports to Google Sheet:", sheetErr);
+    }
+  }
 
   // Configure the Gmail SMTP transporter
   const transporter = nodemailer.createTransport({

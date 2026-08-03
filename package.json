@@ -56,6 +56,7 @@
     "@types/node-schedule": "^2.1.7",
     "csv-parse": "^5.6.0",
     "electron-squirrel-startup": "^1.0.1",
+    "googleapis": "^124.0.0",
     "node-schedule": "^2.1.1",
     "nodemailer": "^9.0.3",
     "react": "^18.3.1",
