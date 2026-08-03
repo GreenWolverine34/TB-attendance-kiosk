@@ -6,9 +6,7 @@ export interface TodaysStats {
 
 export interface EnabledActions {
     sendToSlack: boolean;
-    syncToMyPulse: boolean;
     sendReportEmail: boolean;
-    backupDBToS3: boolean;
 }
 
 export interface CurrentAttendanceEntry {
