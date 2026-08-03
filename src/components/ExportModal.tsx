@@ -57,9 +57,9 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                 window.electron.exportCheckinData(startDate, endDate, 0, false);
             }
         } else if (buttonName === "action-sync-google") {
-            window.electron.syncToGoogleSheet();
+            window.electron.syncToGoogleSheet(selectedReportType);
         } else if (buttonName === "action-send-email") {
-            window.electron.sendReportEmail();
+            window.electron.sendReportEmail(selectedReportType);
         }
 
         // Other actions

@@ -228,7 +228,7 @@ const createWindow = async (db: Database) => {
 
     // Sync to Google Sheets on-demand from renderer
     ipcMain.removeAllListeners("syncToGoogleSheet");
-    ipcMain.on("syncToGoogleSheet", async () => {
+    ipcMain.on("syncToGoogleSheet", async (_, reportType?: "attendance" | "meeting" | "checkin" | "all") => {
         if (!enabledActions.sendToGoogleSheet) {
             dialog.showErrorBox("Not Configured", "Google Sheets sync is not configured on this device.");
             return;
@@ -237,11 +237,21 @@ const createWindow = async (db: Database) => {
         try {
             const startDate = getStartDate();
             const today = getToday();
-            const [attendanceReport, meetingReport, checkinData] = await Promise.all([
-                generateAttendanceReport(db, startDate, today, MEETING_THRESHOLD),
-                generateMeetingReport(db, startDate, today, MEETING_THRESHOLD),
-                generateCheckinData(db, startDate, today, MEETING_THRESHOLD),
-            ]);
+
+            // Generate only the requested report(s)
+            let attendanceReport = "";
+            let meetingReport = "";
+            let checkinData = "";
+
+            if (!reportType || reportType === "all" || reportType === "attendance") {
+                attendanceReport = await generateAttendanceReport(db, startDate, today, MEETING_THRESHOLD);
+            }
+            if (!reportType || reportType === "all" || reportType === "meeting") {
+                meetingReport = await generateMeetingReport(db, startDate, today, MEETING_THRESHOLD);
+            }
+            if (!reportType || reportType === "all" || reportType === "checkin") {
+                checkinData = await generateCheckinData(db, startDate, today, MEETING_THRESHOLD);
+            }
 
             await uploadReportsToSheet(attendanceReport, meetingReport, checkinData);
             await dialog.showMessageBox(mainWindow, { title: "Success", message: "Reports synced to Google Sheets" });
@@ -388,9 +398,9 @@ const createWindow = async (db: Database) => {
         }
     });
 
-    ipcMain.on("sendReportEmail", async () => {
+    ipcMain.on("sendReportEmail", async (_, reportType?: "attendance" | "meeting" | "checkin" | "all") => {
         try {
-            await sendReportEmail(db);
+            await sendReportEmail(db, reportType);
             await dialog.showMessageBox(mainWindow, {
                 title: "Success",
                 message: "Report email sent successfully",
