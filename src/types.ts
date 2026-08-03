@@ -9,6 +9,7 @@ export interface EnabledActions {
     syncToMyPulse: boolean;
     sendReportEmail: boolean;
     backupDBToS3: boolean;
+    sendToGoogleSheet: boolean;
 }
 
 export interface CurrentAttendanceEntry {

@@ -19,6 +19,7 @@ declare global {
             syncToMyPulse: () => void;
             sendReportEmail: () => void;
             backupDBToS3: () => void;
+            syncToGoogleSheet: () => void;
         }
     }
 }
@@ -40,4 +41,5 @@ contextBridge.exposeInMainWorld("electron", {
     syncToMyPulse: () => ipcRenderer.send("syncToMyPulse"),
     sendReportEmail: () => ipcRenderer.send("sendReportEmail"),
     backupDBToS3: () => ipcRenderer.send("backupDBToS3"),
+    syncToGoogleSheet: () => ipcRenderer.send("syncToGoogleSheet"),
 });

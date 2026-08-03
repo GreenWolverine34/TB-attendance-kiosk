@@ -19,8 +19,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
     const defaultEndDate = getToday();
     const [startDate, setStartDate] = useState(defaultStartDate);
     const [endDate, setEndDate] = useState(defaultEndDate);
-    const [meetingThreshold, setMeetingThreshold] = useState(DEFAULT_MEETING_THRESHOLD);
-    const [sendToSlack, setSendToSlack] = useState(false);
+    const [sendToSlack, setSendToSlack] = useState(true);
     const [numCheckinsToday, setNumCheckinsToday] = useState(0);
     const [numCheckoutsToday, setNumCheckoutsToday] = useState(0);
     const [checkoutRatePercent, setCheckoutRatePercent] = useState(0);
@@ -31,7 +30,6 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
 
         setStartDate(defaultStartDate);
         setEndDate(defaultEndDate);
-        setMeetingThreshold(DEFAULT_MEETING_THRESHOLD);
         setSendToSlack(false);
 
         window.electron.getTodaysStats().then(({ numCheckins, numCheckouts, checkoutRatePercent }) => {
@@ -41,36 +39,22 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
         });
     }
 
-    function handleMeetingThresholdChange(e: React.ChangeEvent<HTMLInputElement>) {
-        setMeetingThreshold(e.target.value);
-    }
-
-    function decrementMeetingThreshold() {
-        setMeetingThreshold(Math.max(Number(meetingThreshold) - 1, 1).toString());
-    }
-
-    function incrementMeetingThreshold() {
-        setMeetingThreshold(Math.max(Number(meetingThreshold) + 1, 1).toString());
-    }
-
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         const submitter = (e.nativeEvent as SubmitEvent).submitter;
         const buttonName = (submitter as HTMLButtonElement).name;
         if (buttonName === "export-attendance-report") {
-            window.electron.exportAttendanceReport(startDate, endDate, Number(meetingThreshold), sendToSlack);
+            window.electron.exportAttendanceReport(startDate, endDate, 0, sendToSlack);
         } else if (buttonName === "export-meeting-report") {
-            window.electron.exportMeetingReport(startDate, endDate, Number(meetingThreshold), sendToSlack);
+            window.electron.exportMeetingReport(startDate, endDate, 0, sendToSlack);
         } else if (buttonName === "export-checkin-data") {
-            window.electron.exportCheckinData(startDate, endDate, Number(meetingThreshold), sendToSlack);
+            window.electron.exportCheckinData(startDate, endDate, 0, sendToSlack);
         } else if (buttonName === "import-students") {
             window.electron.importStudents();
-        } else if (buttonName === "sync-to-mypulse") {
-            window.electron.syncToMyPulse();
+        } else if (buttonName === "sync-google-sheet") {
+            window.electron.syncToGoogleSheet();
         } else if (buttonName === "send-report-email") {
             window.electron.sendReportEmail();
-        } else if (buttonName === "backup-db-to-s3") {
-            window.electron.backupDBToS3();
         }
     }
 
@@ -106,28 +90,6 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                         value={endDate}
                         required
                         onChange={(e) => setEndDate(e.target.value)} />
-                </div>
-            </div>
-            <div className="modal-row">
-                <div><label htmlFor="meeting-threshold">Meeting Threshold</label></div>
-                <div>Minimum number of unique checkins for a given day to count as a meeting</div>
-                <div>
-                    <button
-                        className="meeting-threshold-button"
-                        type="button"
-                        onClick={decrementMeetingThreshold}>−</button>
-                    <input
-                        id="meeting-threshold"
-                        name="meeting-threshold"
-                        value={meetingThreshold}
-                        type="number"
-                        min="1"
-                        required
-                        onChange={handleMeetingThresholdChange} />
-                    <button
-                        className="meeting-threshold-button"
-                        type="button"
-                        onClick={incrementMeetingThreshold}>+</button>
                 </div>
             </div>
             <div className="modal-row">
@@ -180,18 +142,18 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                     Sync to MyPulse
                 </button>
                 <button
+                    name="sync-google-sheet"
+                    className="modal-submit-button"
+                    type="submit"
+                    disabled={!enabledActions.sendToGoogleSheet}>
+                    Sync to Google Sheets
+                </button>
+                <button
                     name="send-report-email"
                     className="modal-submit-button"
                     type="submit"
                     disabled={!enabledActions.sendReportEmail}>
                     Send Report Email
-                </button>
-                <button
-                    name="backup-db-to-s3"
-                    className="modal-submit-button"
-                    type="submit"
-                    disabled={!enabledActions.backupDBToS3}>
-                    Back up DB to S3
                 </button>
             </div>
         </form>
