@@ -20,7 +20,7 @@ export default function App() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [lastPromptTime, setLastPromptTime] = useState(null);
   const [promptText, setPromptText] = useState(PROMPT_LOCKED);
-  const [hasFocus, setHasFocus] = useState(false);
+  const [hasFocus, setHasFocus] = useState(() => typeof document !== "undefined" && document.hasFocus());
   const [showRoster, setShowRoster] = useState(false);
   const [attendance, setAttendance] = useState<CurrentAttendanceEntry[]>([]);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -106,12 +106,35 @@ export default function App() {
   useEffect(() => {
     const handleFocus = () => setHasFocus(true);
     const handleBlur = () => setHasFocus(false);
+    const activateFocus = () => {
+      try {
+        window.focus();
+      } catch {
+        // focus may fail in some environments; still set state so the modal closes.
+      }
+      setHasFocus(true);
+    };
+
     window.addEventListener("focus", handleFocus);
     window.addEventListener("blur", handleBlur);
+    window.addEventListener("pointerdown", activateFocus);
+    window.addEventListener("mousedown", activateFocus);
+    window.addEventListener("touchstart", activateFocus);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        setHasFocus(document.hasFocus());
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     window.electron.getEnabledActions().then(setEnabledActions);
+
     return () => {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("pointerdown", activateFocus);
+      window.removeEventListener("mousedown", activateFocus);
+      window.removeEventListener("touchstart", activateFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -143,6 +166,7 @@ export default function App() {
         className="modal focus-modal"
         isOpen={!hasFocus}
         shouldCloseOnOverlayClick={true}
+        shouldCloseOnEsc={true}
         onRequestClose={() => setHasFocus(true)}>
         <div className="focus-modal-content" onClick={() => setHasFocus(true)} onPointerDown={() => setHasFocus(true)}>
           <h1>Please tap the screen to continue</h1>
