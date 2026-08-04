@@ -50,6 +50,18 @@ async function initDB(): Promise<Database> {
     await dbInstance.exec("CREATE INDEX IF NOT EXISTS idNumberIndex ON checkin (idNumber)");
     await dbInstance.exec("CREATE TABLE IF NOT EXISTS student (idNumber TEXT PRIMARY KEY, firstName TEXT, lastName TEXT, slackId TEXT)");
 
+    // Ensure legacy DBs get the optional slackId column added if it didn't exist previously
+    try {
+        const cols: Array<{ name: string } & Record<string, any>> = await dbInstance.all("PRAGMA table_info(student)");
+        const hasSlack = cols.some((c) => c.name === "slackId");
+        if (!hasSlack) {
+            await dbInstance.exec("ALTER TABLE student ADD COLUMN slackId TEXT");
+        }
+    } catch (e) {
+        // If migration check fails, log and continue — the app can still function without the column
+        console.error("Failed to verify/add slackId column on student table:", e);
+    }
+
     return dbInstance;
 }
 
