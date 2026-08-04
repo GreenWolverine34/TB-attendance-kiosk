@@ -139,8 +139,12 @@ export default function App() {
 
   return (
     <>
-      <Modal className="modal focus-modal" isOpen={!hasFocus}>
-        <div className="focus-modal-content" onClick={() => setHasFocus(true)}>
+      <Modal
+        className="modal focus-modal"
+        isOpen={!hasFocus}
+        shouldCloseOnOverlayClick={true}
+        onRequestClose={() => setHasFocus(true)}>
+        <div className="focus-modal-content" onClick={() => setHasFocus(true)} onPointerDown={() => setHasFocus(true)}>
           <h1>Please tap the screen to continue</h1>
         </div>
       </Modal>
