@@ -71,7 +71,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
     }
 
     return <Modal
-        className="modal"
+        className="modal export-modal"
         isOpen={isOpen}
         onAfterOpen={handleModalOpen}
         onRequestClose={onClose}
