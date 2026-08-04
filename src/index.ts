@@ -6,6 +6,7 @@ import { WebClient } from "@slack/web-api";
 import sqlite3 from "sqlite3";
 import { open, Database } from "sqlite";
 import schedule from "node-schedule";
+import "dotenv/config"; 
 
 import {
     generateAttendanceReport,

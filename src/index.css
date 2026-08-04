@@ -251,116 +251,191 @@
   /* ==========================================
      ADMIN SETTINGS MODAL INTERFACES
      ========================================== */
-  .modal { 
-    position: absolute; 
-    inset: 30px; 
-    border: 1px solid rgb(204, 204, 204); 
-    background: white; 
-    overflow: auto; 
-    border-radius: 8px; 
-    outline: none; 
-    padding: 20px; 
-    color: black; 
-    font-size: 0.9rem; 
-    h2 { margin: 0; } 
-    
-    .modal-close-button { 
-      position: absolute; 
-      top: 0; 
-      right: 0; 
-      padding: 20px; 
-      font-size: 1.5rem; 
-      border: none; 
-      background: none; 
-      cursor: pointer; 
-      transition: none; 
-    } 
-    .modal-close-button:active { background: none; color: black; transition: none; } 
-    .today-stats { margin: 0 1rem; } 
-    label { font-size: 1rem; } 
-    
-    input, button { 
-      font-size: 1rem; 
-      border-radius: 8px; 
-      border: 1px solid grey; 
-      padding: 0.5rem; 
-      transition: all 0.2s ease-in; 
-    } 
-    button:enabled:active { background-color: var(--brand-green); color: white; transition: all 0.1s ease-out; } 
-    .modal-row { 
-      margin-top: 0.75rem; 
-      div { margin: 0.25rem 0; } 
-    } 
-    .date-input { text-align: center; } 
-    .date-range { font-size: 1rem; } 
-    #meeting-threshold { width: 100px; text-align: center; } 
-    input[type="radio"] { transform: scale(1.5); margin-left: 1rem; margin-right: 0.5rem; } 
-    #meeting-threshold::-webkit-outer-spin-button, #meeting-threshold::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } 
-    .meeting-threshold-button { width: 50px; margin: 0 0.5rem; } 
-    .modal-submit-button { margin: 0.25rem; } 
+  /* ========================================== ADMIN SETTINGS MODAL INTERFACES ========================================== */
+.modal {
+  position: absolute;
+  inset: 30px;
+  border: 1px solid rgb(204, 204, 204);
+  background: white;
+  overflow: auto;
+  border-radius: 8px;
+  outline: none;
+  padding: 20px;
+  color: black;
+  font-size: 0.9rem;
+  box-sizing: border-box; /* Ensures padding doesn't cause hidden overflows */
+
+  h2 {
+    margin: 0 0 1rem 0; /* Add bottom spacing below headers */
+    font-size: 1.5rem;
+  }
+
+  .modal-close-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 20px;
+    font-size: 1.5rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: none;
+  }
+
+  .modal-close-button:active {
+    background: none;
+    color: black;
+    transition: none;
+  }
+
+  .today-stats {
+    margin: 0.75rem 0;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    font-weight: 500;
+  }
+
+  label {
+    font-size: 1rem;
+    display: inline-block;
+    margin-bottom: 0.25rem;
+  }
+
+  input, button {
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid grey;
+    padding: 0.5rem;
+    transition: all 0.2s ease-in;
+    box-sizing: border-box;
+  }
+
+  button:enabled:active {
+    background-color: var(--brand-green);
+    color: white;
+    transition: all 0.1s ease-out;
+  }
+
+  .modal-row {
+    margin-top: 1rem;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .date-input {
+    text-align: center;
+  }
+
+  .date-range {
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  #meeting-threshold {
+    width: 100px;
+    text-align: center;
+  }
+
+  input[type="radio"] {
+    transform: scale(1.5);
+    margin-left: 1rem;
+    margin-right: 0.5rem;
+  }
+
+  #meeting-threshold::-webkit-outer-spin-button,
+  #meeting-threshold::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .meeting-threshold-button {
+    width: 50px;
+    margin: 0 0.5rem;
+  }
+
+  .modal-submit-button {
+    margin: 0.25rem;
+  }
 
   /* Two-column layout for export modal actions and report types */
-  .two-column { 
-    display: flex; 
-    flex-direction: row; 
-    gap: 1rem; 
-    align-items: flex-start; 
+  .two-column {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    align-items: flex-start;
     justify-content: center;
+    width: 100%;
+    margin-top: 1.5rem;
   }
 
-  .two-column .column { 
-    flex: 1 1 0; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: stretch; 
-    justify-content: flex-start; 
-  }
-
-  .actions-column { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 0.5rem; 
+  /* Isolated modal column rules to prevent picking up global .column properties */
+  .two-column .column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
     align-items: center; 
+    justify-content: flex-start;
+    padding: 0;
+    height: auto; 
   }
 
-  .actions-column .main-action { 
-    width: 220px; 
-    padding: 0.6rem 0.9rem; 
+  .actions-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  /* Adjusted buttons for uniform layout and sizing matching your reference image */
+  .actions-column .main-action,
+  .report-option .report-select,
+  .import-btn { 
+    width: 240px;
+    padding: 0.65rem 1rem;
     text-align: center;
     cursor: pointer;
+    background: white;
+    border: 1px solid #bbb;
   }
 
-  .reports-column { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 0.5rem; 
-    align-items: center; 
+  .reports-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
   }
 
-  .report-option { 
-    width: 220px; 
+  .report-option {
+    width: 240px;
   }
 
-  .report-select { 
-    width: 100%; 
-    text-align: center; 
-    cursor: pointer; 
-    background: #f6f6f6; 
-    border: 1px solid #cfcfcf; 
+  .report-select {
+    width: 100%;
+    text-align: center;
+    cursor: pointer;
+    background: #f6f6f6;
+    border: 1px solid #cfcfcf;
   }
 
-  .report-option.selected .report-select { 
-    background: var(--brand-green); 
-    color: white; 
+  .report-option.selected .report-select {
+    background: var(--brand-green);
+    color: white;
     border-color: var(--brand-green);
   }
 
-  .build-footer { position: absolute; bottom: 0; left: 50%; transform: translate(-50%, -50%); width: 100%; font-size: 0.75rem; } 
+  .build-footer {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    font-size: 0.75rem;
   }
-  
-  .ReactModal__Overlay { opacity: 0; transition: opacity 250ms ease-in-out; } 
-  .ReactModal__Overlay--after-open { opacity: 1; } 
-  .ReactModal__Overlay--before-close { opacity: 0; } 
-  .focus-modal { padding: 0; } 
-  .focus-modal-content { height: 100%; display: flex; justify-content: center; align-items: center; }
-  
+}
