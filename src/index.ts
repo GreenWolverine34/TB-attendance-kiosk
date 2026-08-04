@@ -48,7 +48,7 @@ async function initDB(): Promise<Database> {
     await dbInstance.exec("CREATE TABLE IF NOT EXISTS checkin (timestamp TEXT, idNumber TEXT)");
     await dbInstance.exec("CREATE INDEX IF NOT EXISTS timestampIndex ON checkin (timestamp COLLATE NOCASE)");
     await dbInstance.exec("CREATE INDEX IF NOT EXISTS idNumberIndex ON checkin (idNumber)");
-    await dbInstance.exec("CREATE TABLE IF NOT EXISTS student (idNumber TEXT PRIMARY KEY, firstName TEXT, lastName TEXT)");
+    await dbInstance.exec("CREATE TABLE IF NOT EXISTS student (idNumber TEXT PRIMARY KEY, firstName TEXT, lastName TEXT, slackId TEXT)");
 
     return dbInstance;
 }
@@ -365,6 +365,8 @@ const createWindow = async (db: Database) => {
                     const idNumber = record.id_number?.trim();
                     const firstName = record.first_name?.trim();
                     const lastName = record.last_name?.trim();
+                    // Optional Slack ID column: accept slack_id or slackId (case-sensitive depending on CSV headers)
+                    const slackId = (record.slack_id || record.slackId || record.slackid)?.trim() || null;
 
                     if (!idNumber || idNumber.length !== 10 || !firstName || !lastName) {
                         numFailure++;
@@ -372,10 +374,11 @@ const createWindow = async (db: Database) => {
                     }
 
                     await db.run(
-                        "INSERT OR REPLACE INTO student (idNumber, firstName, lastName) VALUES (?, ?, ?)",
+                        "INSERT OR REPLACE INTO student (idNumber, firstName, lastName, slackId) VALUES (?, ?, ?, ?)",
                         idNumber,
                         firstName,
                         lastName,
+                        slackId,
                     );
                     numSuccess++;
                 }
