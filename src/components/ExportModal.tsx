@@ -173,8 +173,5 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                 </div>
             </div>
         </form>
-        <div className="build-footer">
-            attendance-kiosk commit {packageJSON.commit} (built {packageJSON.buildTime})
-        </div>
     </Modal>;
 }
