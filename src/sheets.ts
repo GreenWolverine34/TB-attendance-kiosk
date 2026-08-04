@@ -45,7 +45,7 @@ export async function uploadReportsToSheet(attendanceCsv: string, meetingCsv: st
     uploads.push( 
       sheets.spreadsheets.values.append({ 
         spreadsheetId: sheetId, 
-        range: `Attendance Report!A1`, 
+        range: `AttendanceReport!A1`, 
         valueInputOption: "USER_ENTERED", 
         insertDataOption: "INSERT_ROWS", 
         requestBody: { values }, 
@@ -80,66 +80,4 @@ export async function uploadReportsToSheet(attendanceCsv: string, meetingCsv: st
   } 
 
   await Promise.all(uploads); 
-
-  // Generate Hours Summary from the checkin CSV (per-person total_hours sum)
-  if (checkinCsv && checkinCsv.trim().length > 0) {
-    try {
-      // Parse CSV into records with columns
-      const records: Array<Record<string, any>> = csvParse(checkinCsv, { columns: true, skip_empty_lines: true });
-
-      // Normalize header keys to lowercase, underscore form for easy matching
-      const normalizeKey = (k: string) => String(k || '').trim().toLowerCase();
-
-      const totals: Record<string, { firstName: string; lastName: string; totalHours: number }> = {};
-      for (const rec of records) {
-        // Find id, names, and hours by checking common header variants
-        const keys = Object.keys(rec);
-        const lookup = (cands: string[]) => {
-          for (const cand of cands) {
-            const found = keys.find((k) => normalizeKey(k) === cand);
-            if (found) return rec[found];
-          }
-          return undefined;
-        };
-
-        const idRaw = lookup(['id_number', 'idnumber', 'id']);
-        const firstRaw = lookup(['first_name', 'firstname', 'first name']);
-        const lastRaw = lookup(['last_name', 'lastname', 'last name']);
-        const hoursRaw = lookup(['total_hours', 'totalhours', 'total hours', 'total_hours']);
-
-        const id = idRaw ? String(idRaw).trim() : '';
-        if (!id) continue;
-        const first = firstRaw ? String(firstRaw).trim() : '';
-        const last = lastRaw ? String(lastRaw).trim() : '';
-
-        let hours = 0;
-        if (typeof hoursRaw === 'number') {
-          hours = hoursRaw;
-        } else if (typeof hoursRaw === 'string') {
-          const cleaned = hoursRaw.replace(/[^0-9.\-]/g, '');
-          hours = parseFloat(cleaned) || 0;
-        }
-
-        if (!totals[id]) totals[id] = { firstName: first, lastName: last, totalHours: 0 };
-        totals[id].totalHours += hours;
-      }
-
-      // Prepare output rows
-      const outRows: any[][] = [['id_number', 'first_name', 'last_name', 'total_hours']];
-      Object.keys(totals).sort().forEach((id) => {
-        const t = totals[id];
-        outRows.push([id, t.firstName || '', t.lastName || '', Number(t.totalHours.toFixed(2))]);
-      });
-
-      // Write (overwrite) Hours Summary sheet
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: sheetId,
-        range: 'Hours Summary!A1',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: { values: outRows },
-      });
-    } catch (err) {
-      console.error('Failed to generate Hours Summary:', err);
-    }
-  }
 }
