@@ -8,12 +8,13 @@ What the app now writes
 
 - The app appends CSV rows to a sheet/tab named `rawData` in the target Google Spreadsheet.
 - Each appended row has these columns (CSV header): `first_name,last_name,date,total_hours` (hours as a decimal number).
+- If the `rawData` sheet does not already exist, the app creates it and adds a header row.
 - Sync is now performed on-demand by the app and automatically every hour.
 
 Quick setup on a Raspberry Pi
 
-1. Create a Google Sheet and add a tab named `rawData`.
-   - In the first row (header) place: First Name, Last Name, Date, Total Hours
+1. Create a Google Sheet (the app will create the `rawData` tab automatically if needed).
+   - If you prefer to pre-create the tab, use the header row: First Name, Last Name, Date, Total Hours
 
 2. Create a Google service account and grant it edit access to your Google Sheet.
    - Download the service account JSON key file.

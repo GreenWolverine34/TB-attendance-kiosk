@@ -23,8 +23,43 @@ async function getSheetsClient() {
   // FIX 2: Pass 'auth' directly to avoid TypeScript 'auth.getClient()' type conflicts
   const sheets = google.sheets({ version: "v4", auth }); 
 
-  return { sheets, sheetId }; 
-} 
+  return { sheets, sheetId };
+}
+
+async function ensureRawDataSheetExists(sheets: any, sheetId: string) {
+  const metadata = await sheets.spreadsheets.get({
+    spreadsheetId: sheetId,
+    fields: "sheets.properties.title",
+  });
+  const sheetsList = metadata.data.sheets || [];
+  const rawDataSheet = sheetsList.find((sheet: any) => sheet.properties?.title === "rawData");
+
+  if (!rawDataSheet) {
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: sheetId,
+      requestBody: {
+        requests: [
+          {
+            addSheet: {
+              properties: {
+                title: "rawData",
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: "rawData!A1:D1",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [["First Name", "Last Name", "Date", "Total Hours"]],
+      },
+    });
+  }
+}
 
 function csvToValues(csv: string, stripHeader = false): any[][] {
   try {
@@ -41,6 +76,8 @@ function csvToValues(csv: string, stripHeader = false): any[][] {
 
 export async function uploadReportsToSheet(checkinCsv: string) {
   const { sheets, sheetId } = await getSheetsClient();
+  await ensureRawDataSheetExists(sheets, sheetId);
+
   if (!checkinCsv || checkinCsv.trim().length === 0) {
     return;
   }
