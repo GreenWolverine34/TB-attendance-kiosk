@@ -117,46 +117,53 @@ export async function generateMeetingReport(db: Database, startDate: string, end
 }
 
 export async function generateCheckinData(db: Database, startDate: string, endDate: string, meetingThreshold: number) {
+    // Produce one row per check-in/check-out pair. For each student and meeting date, order their
+    // timestamps and pair consecutive taps (1->2, 3->4, ...). If a pair has no checkout, checkoutTime
+    // will be NULL and totalHours will be 0.
     const checkinsResult = await db.all(`
-        SELECT date(timestamp) AS date,
-               checkin.idNumber,
-               ifnull(student.firstName, '') AS firstName,
-               ifnull(student.lastName, '') AS lastName,
-               min(timestamp) AS checkinTime,
-               CASE
-                   WHEN (unixepoch(max(timestamp)) - unixepoch(min(timestamp))) >= ${MIN_CHECKOUT_TIME_S} THEN max(timestamp)
-                   ELSE NULL
-               END AS checkoutTime,
-               CASE
-                   WHEN (unixepoch(max(timestamp)) - unixepoch(min(timestamp))) >= ${MIN_CHECKOUT_TIME_S} THEN (unixepoch(max(timestamp)) - unixepoch(min(timestamp))) / 3600.0
-                   ELSE 0
-               END AS totalHours
-        FROM checkin
-        LEFT JOIN student ON checkin.idNumber = student.idNumber
-        WHERE date IN
-            (SELECT date
-             FROM
-               (SELECT date(timestamp) AS date,
-                       count(DISTINCT idNumber) AS numCheckins
-                FROM checkin
-                WHERE timestamp BETWEEN :startDate AND :endDate
-                  OR timestamp LIKE :endDate || '%'
-                GROUP BY date
-                HAVING numCheckins >= :meetingThreshold))
-          AND (timestamp BETWEEN :startDate AND :endDate
-               OR timestamp LIKE :endDate || '%')
-        GROUP BY date(timestamp),
-                 checkin.idNumber
-        ORDER BY min(timestamp)
+        WITH meeting_dates AS (
+            SELECT date(timestamp) AS date
+            FROM checkin
+            WHERE timestamp BETWEEN :startDate AND :endDate
+               OR timestamp LIKE :endDate || '%'
+            GROUP BY date
+            HAVING count(DISTINCT idNumber) >= :meetingThreshold
+        ), ordered AS (
+            SELECT date(timestamp) AS date,
+                   checkin.idNumber,
+                   ifnull(student.firstName, '') AS firstName,
+                   ifnull(student.lastName, '') AS lastName,
+                   timestamp,
+                   row_number() OVER (PARTITION BY date(timestamp), checkin.idNumber ORDER BY timestamp) AS rn
+            FROM checkin
+            LEFT JOIN student ON checkin.idNumber = student.idNumber
+            WHERE date(timestamp) IN (SELECT date FROM meeting_dates)
+              AND (timestamp BETWEEN :startDate AND :endDate OR timestamp LIKE :endDate || '%')
+        )
+        SELECT o1.date AS date,
+               o1.idNumber AS idNumber,
+               o1.firstName AS firstName,
+               o1.lastName AS lastName,
+               o1.timestamp AS checkinTime,
+               o2.timestamp AS checkoutTime,
+               CASE WHEN o2.timestamp IS NOT NULL THEN (unixepoch(o2.timestamp) - unixepoch(o1.timestamp)) / 3600.0 ELSE 0 END AS totalHours
+        FROM ordered o1
+        LEFT JOIN ordered o2
+          ON o1.idNumber = o2.idNumber
+         AND o1.date = o2.date
+         AND o2.rn = o1.rn + 1
+        WHERE (o1.rn % 2) = 1
+        ORDER BY o1.date, o1.idNumber, o1.timestamp
     `, {
         ":startDate": startDate,
         ":endDate": endDate,
         ":meetingThreshold": meetingThreshold,
     });
 
-    const header = "date,id_number,first_name,last_name,checkin_time,checkout_time,total_hours\n";
+    // User-requested minimal columns for spreadsheet sync: first name, last name, date, amount of time spent
+    const header = "first_name,last_name,date,total_hours\n";
     return header + checkinsResult.map((row) =>
-        `${row.date},${row.idNumber},${row.firstName},${row.lastName},${row.checkinTime},${row.checkoutTime || ""},${row.totalHours.toFixed(2)}\n`
+        `${row.firstName},${row.lastName},${row.date},${row.totalHours.toFixed(2)}\n`
     ).join("");
 }
 
