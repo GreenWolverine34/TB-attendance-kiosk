@@ -8,17 +8,26 @@ async function getSheetsClient() {
   if (!sheetId) throw new Error("GOOGLE_SHEET_ID environment variable is not set"); 
   if (!creds) throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON environment variable is not set"); 
 
-  const credentials = JSON.parse(creds);
-
-  // FIX 1: Handle escaped newline characters safely in the private key
-  if (credentials.private_key) {
-    credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+  let credentials;
+  try {
+    credentials = JSON.parse(creds);
+  } catch (err) {
+    throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON: " + String(err));
   }
 
-  const auth = new google.auth.GoogleAuth({ 
-    credentials, 
-    scopes: ["https://googleapis.com"], 
-  }); 
+  if (!credentials.client_email || !credentials.private_key) {
+    throw new Error(
+      "GOOGLE_SERVICE_ACCOUNT_JSON must include client_email and private_key"
+    );
+  }
+
+  // Handle escaped newline characters safely in the private key
+  credentials.private_key = credentials.private_key.replace(/\\n/g, "\n");
+
+  const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
 
   // FIX 2: Pass 'auth' directly to avoid TypeScript 'auth.getClient()' type conflicts
   const sheets = google.sheets({ version: "v4", auth }); 
