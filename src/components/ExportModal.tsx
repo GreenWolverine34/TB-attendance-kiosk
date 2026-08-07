@@ -129,7 +129,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                         name="action-sync-google"
                         className="modal-submit-button main-action"
                         type="submit">
-                        Sync rawData to Google Sheets
+                        Sync to Google Sheets
                     </button>
 
                     <button
