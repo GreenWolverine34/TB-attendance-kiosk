@@ -95,14 +95,10 @@ function setupCronJobs(db: Database) {
             try {
                 console.log("Running scheduled Google Sheets sync");
                 const today = getToday();
-                if (await isMeetingDate(db, today, MEETING_THRESHOLD)) {
-                    const startDate = getStartDate();
-                    const checkinData = await generateCheckinData(db, startDate, today, MEETING_THRESHOLD);
-                    await uploadReportsToSheet(checkinData);
-                    console.log("Scheduled Google Sheets sync complete");
-                } else {
-                    console.log("Not a meeting date, skipping scheduled Google Sheets sync");
-                }
+                const startDate = getStartDate();
+                const checkinData = await generateCheckinData(db, startDate, today, MEETING_THRESHOLD);
+                await uploadReportsToSheet(checkinData);
+                console.log("Scheduled Google Sheets sync complete");
             } catch (err) {
                 console.error("Error during scheduled Google Sheets sync:", err);
             }
