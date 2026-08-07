@@ -160,8 +160,8 @@ export async function generateCheckinData(db: Database, startDate: string, endDa
         ":meetingThreshold": meetingThreshold,
     });
 
-    // User-requested minimal columns for spreadsheet sync: first name, last name, date, amount of time spent
-    const header = "first_name,last_name,date,total_hours\n";
+    // User-requested minimal columns for spreadsheet sync: first name, last name, date, hours for each pair
+    const header = "first_name,last_name,date,hours\n";
     return header + checkinsResult.map((row) =>
         `${row.firstName},${row.lastName},${row.date},${row.totalHours.toFixed(2)}\n`
     ).join("");

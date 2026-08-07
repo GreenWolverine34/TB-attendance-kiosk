@@ -55,7 +55,7 @@ async function ensureRawDataSheetExists(sheets: any, sheetId: string) {
       range: "rawData!A1:D1",
       valueInputOption: "USER_ENTERED",
       requestBody: {
-        values: [["First Name", "Last Name", "Date", "Total Hours"]],
+        values: [["First Name", "Last Name", "Date", "Hours"]],
       },
     });
   }
