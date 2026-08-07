@@ -17,7 +17,7 @@ declare global {
             exportCheckinData: (startDate: string, endDate: string, meetingThreshold: number, sendToSlack: boolean) => void;
             importStudents: () => void;
             sendReportEmail: (reportType?: "attendance" | "meeting" | "checkin" | "all") => void;
-            syncToGoogleSheet: (reportType?: "attendance" | "meeting" | "checkin" | "all") => void;
+            syncToGoogleSheet: () => void;
         }
     }
 }
@@ -37,5 +37,5 @@ contextBridge.exposeInMainWorld("electron", {
         ipcRenderer.send("exportCheckinData", startDate, endDate, meetingThreshold, sendToSlack),
     importStudents: () => ipcRenderer.send("importStudents"),
     sendReportEmail: (reportType?: "attendance" | "meeting" | "checkin" | "all") => ipcRenderer.send("sendReportEmail", reportType),
-    syncToGoogleSheet: (reportType?: "attendance" | "meeting" | "checkin" | "all") => ipcRenderer.send("syncToGoogleSheet", reportType),
+    syncToGoogleSheet: () => ipcRenderer.send("syncToGoogleSheet"),
 });

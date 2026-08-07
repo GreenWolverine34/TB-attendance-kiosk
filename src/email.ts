@@ -39,9 +39,9 @@ export async function sendReportEmail(db: Database, reportType?: "attendance" | 
   const subject = `TerrorBytes Attendance Reports - ${today}`;
 
   // Optionally upload reports to Google Sheets if configuration is present
-  if (process.env.GOOGLE_SHEET_ID) {
+  if (process.env.GOOGLE_SHEET_ID && process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
     try {
-      await uploadReportsToSheet(attendanceReport || "", meetingReport || "", checkinData || "");
+      await uploadReportsToSheet(checkinData || "");
       console.log("Reports uploaded to Google Sheet");
     } catch (sheetErr) {
       console.error("Failed to upload reports to Google Sheet:", sheetErr);

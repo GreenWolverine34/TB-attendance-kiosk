@@ -8,6 +8,7 @@ What the app now writes
 
 - The app appends CSV rows to a sheet/tab named `rawData` in the target Google Spreadsheet.
 - Each appended row has these columns (CSV header): `first_name,last_name,date,total_hours` (hours as a decimal number).
+- Sync is now performed on-demand by the app and automatically every hour.
 
 Quick setup on a Raspberry Pi
 

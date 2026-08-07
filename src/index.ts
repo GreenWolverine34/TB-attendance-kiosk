@@ -89,21 +89,16 @@ function setupCronJobs(db: Database) {
         });
     }
 
-    // Auto-sync to Google Sheets every 15 minutes if enabled
+    // Auto-sync to Google Sheets every hour if enabled
     if (enabledActions.sendToGoogleSheet) {
-        schedule.scheduleJob("*/15 * * * *", async () => {
+        schedule.scheduleJob("0 * * * *", async () => {
             try {
                 console.log("Running scheduled Google Sheets sync");
                 const today = getToday();
                 if (await isMeetingDate(db, today, MEETING_THRESHOLD)) {
-                    // generate reports and upload
                     const startDate = getStartDate();
-                    const [attendanceReport, meetingReport, checkinData] = await Promise.all([
-                        generateAttendanceReport(db, startDate, today, MEETING_THRESHOLD),
-                        generateMeetingReport(db, startDate, today, MEETING_THRESHOLD),
-                        generateCheckinData(db, startDate, today, MEETING_THRESHOLD),
-                    ]);
-                    await uploadReportsToSheet(attendanceReport, meetingReport, checkinData);
+                    const checkinData = await generateCheckinData(db, startDate, today, MEETING_THRESHOLD);
+                    await uploadReportsToSheet(checkinData);
                     console.log("Scheduled Google Sheets sync complete");
                 } else {
                     console.log("Not a meeting date, skipping scheduled Google Sheets sync");
@@ -240,7 +235,7 @@ const createWindow = async (db: Database) => {
 
     // Sync to Google Sheets on-demand from renderer
     ipcMain.removeAllListeners("syncToGoogleSheet");
-    ipcMain.on("syncToGoogleSheet", async (_, reportType?: "attendance" | "meeting" | "checkin" | "all") => {
+    ipcMain.on("syncToGoogleSheet", async () => {
         if (!enabledActions.sendToGoogleSheet) {
             dialog.showErrorBox("Not Configured", "Google Sheets sync is not configured on this device.");
             return;
@@ -249,23 +244,8 @@ const createWindow = async (db: Database) => {
         try {
             const startDate = getStartDate();
             const today = getToday();
-
-            // Generate only the requested report(s)
-            let attendanceReport = "";
-            let meetingReport = "";
-            let checkinData = "";
-
-            if (!reportType || reportType === "all" || reportType === "attendance") {
-                attendanceReport = await generateAttendanceReport(db, startDate, today, MEETING_THRESHOLD);
-            }
-            if (!reportType || reportType === "all" || reportType === "meeting") {
-                meetingReport = await generateMeetingReport(db, startDate, today, MEETING_THRESHOLD);
-            }
-            if (!reportType || reportType === "all" || reportType === "checkin") {
-                checkinData = await generateCheckinData(db, startDate, today, MEETING_THRESHOLD);
-            }
-
-            await uploadReportsToSheet(attendanceReport, meetingReport, checkinData);
+            const checkinData = await generateCheckinData(db, startDate, today, MEETING_THRESHOLD);
+            await uploadReportsToSheet(checkinData);
             await dialog.showMessageBox(mainWindow, { title: "Success", message: "Reports synced to Google Sheets" });
         } catch (err) {
             console.error("Failed to sync reports to Google Sheets:", err);

@@ -57,7 +57,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                 window.electron.exportCheckinData(startDate, endDate, 0, false);
             }
         } else if (buttonName === "action-sync-google") {
-            window.electron.syncToGoogleSheet(selectedReportType);
+            window.electron.syncToGoogleSheet();
         } else if (buttonName === "action-send-email") {
             window.electron.sendReportEmail(selectedReportType);
         }
@@ -129,7 +129,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
                         name="action-sync-google"
                         className="modal-submit-button main-action"
                         type="submit">
-                        Sync to Google Sheets
+                        Sync rawData to Google Sheets
                     </button>
 
                     <button

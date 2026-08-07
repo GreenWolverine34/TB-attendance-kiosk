@@ -26,58 +26,35 @@ async function getSheetsClient() {
   return { sheets, sheetId }; 
 } 
 
-function csvToValues(csv: string): any[][] { 
-  try { 
-    const records = csvParse(csv, { columns: false, skip_empty_lines: true }); 
-    return records as any[][]; 
-  } catch (err) { 
-    return csv 
-      .split("\n") .map((r) => r.split(",")); 
-  } 
-} 
+function csvToValues(csv: string, stripHeader = false): any[][] {
+  try {
+    const records = csvParse(csv, { columns: false, skip_empty_lines: true });
+    return stripHeader && records.length > 0 ? (records as any[][]).slice(1) : (records as any[][]);
+  } catch (err) {
+    const rows = csv
+      .split("\n")
+      .map((r) => r.split(","))
+      .filter((row) => row.some((col) => col.trim() !== ""));
+    return stripHeader && rows.length > 0 ? rows.slice(1) : rows;
+  }
+}
 
-export async function uploadReportsToSheet(attendanceCsv: string, meetingCsv: string, checkinCsv: string) { 
-  const { sheets, sheetId } = await getSheetsClient(); 
-  const uploads: Array<Promise<any>> = []; 
+export async function uploadReportsToSheet(checkinCsv: string) {
+  const { sheets, sheetId } = await getSheetsClient();
+  if (!checkinCsv || checkinCsv.trim().length === 0) {
+    return;
+  }
 
-  if (attendanceCsv && attendanceCsv.trim().length > 0) { 
-    const values = csvToValues(attendanceCsv); 
-    uploads.push( 
-      sheets.spreadsheets.values.append({ 
-        spreadsheetId: sheetId, 
-        range: `AttendanceReport!A1`, 
-        valueInputOption: "USER_ENTERED", 
-        insertDataOption: "INSERT_ROWS", 
-        requestBody: { values }, 
-      }), 
-    ); 
-  } 
+  const values = csvToValues(checkinCsv, true);
+  if (values.length === 0) {
+    return;
+  }
 
-  if (meetingCsv && meetingCsv.trim().length > 0) { 
-    const values = csvToValues(meetingCsv); 
-    uploads.push( 
-      sheets.spreadsheets.values.append({ 
-        spreadsheetId: sheetId, 
-        range: `MeetingReport!A1`, 
-        valueInputOption: "USER_ENTERED", 
-        insertDataOption: "INSERT_ROWS", 
-        requestBody: { values }, 
-      }), 
-    ); 
-  } 
-
-  if (checkinCsv && checkinCsv.trim().length > 0) { 
-    const values = csvToValues(checkinCsv); 
-    uploads.push( 
-      sheets.spreadsheets.values.append({ 
-        spreadsheetId: sheetId, 
-        range: `rawData!A1`, 
-        valueInputOption: "USER_ENTERED", 
-        insertDataOption: "INSERT_ROWS", 
-        requestBody: { values }, 
-      }), 
-    ); 
-  } 
-
-  await Promise.all(uploads); 
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: sheetId,
+    range: `rawData!A1`,
+    valueInputOption: "USER_ENTERED",
+    insertDataOption: "INSERT_ROWS",
+    requestBody: { values },
+  });
 }
