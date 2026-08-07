@@ -229,6 +229,12 @@ const createWindow = async (db: Database) => {
         return enabledActions;
     });
 
+    ipcMain.removeHandler("getStudentIds");
+    ipcMain.handle("getStudentIds", async () => {
+        const rows = await db.all("SELECT idNumber FROM student ORDER BY idNumber");
+        return rows.map((row: { idNumber: string }) => row.idNumber);
+    });
+
     // Sync to Google Sheets on-demand from renderer
     ipcMain.removeAllListeners("syncToGoogleSheet");
     ipcMain.on("syncToGoogleSheet", async () => {

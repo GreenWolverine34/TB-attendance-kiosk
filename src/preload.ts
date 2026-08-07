@@ -12,6 +12,7 @@ declare global {
             getTodaysStats: () => Promise<TodaysStats>;
             getCurrentAttendance: () => Promise<CurrentAttendanceEntry[]>;
             getEnabledActions: () => Promise<EnabledActions>;
+            getStudentIds: () => Promise<string[]>;
             exportAttendanceReport: (startDate: string, endDate: string, meetingThreshold: number, sendToSlack: boolean) => void;
             exportMeetingReport: (startDate: string, endDate: string, meetingThreshold: number, sendToSlack: boolean) => void;
             exportCheckinData: (startDate: string, endDate: string, meetingThreshold: number, sendToSlack: boolean) => void;
@@ -29,6 +30,7 @@ contextBridge.exposeInMainWorld("electron", {
     getTodaysStats: () => ipcRenderer.invoke("getTodaysStats"),
     getCurrentAttendance: () => ipcRenderer.invoke("getCurrentAttendance"),
     getEnabledActions: () => ipcRenderer.invoke("getEnabledActions"),
+    getStudentIds: () => ipcRenderer.invoke("getStudentIds"),
     exportAttendanceReport: (startDate: string, endDate: string, meetingThreshold: number, sendToSlack: boolean) =>
         ipcRenderer.send("exportAttendanceReport", startDate, endDate, meetingThreshold, sendToSlack),
     exportMeetingReport: (startDate: string, endDate: string, meetingThreshold: number, sendToSlack: boolean) =>

@@ -1,226 +1,237 @@
 /* ==========================================
    FONT FACES
    ========================================== */
-   @font-face { 
-    font-family: 'Inter'; 
-    font-style: normal; 
-    font-weight: 100 900; 
-    font-display: swap; 
-    src: url('../assets/Inter-latin.woff2') format('woff2'); 
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; 
-  } 
-  @font-face { 
-    font-family: 'Inter'; 
-    font-style: normal; 
-    font-weight: 100 900; 
-    font-display: swap; 
-    src: url('../assets/Inter-symbols.woff2') format('woff2'); 
-  } 
-  
-  /* ==========================================
-     GLOBAL LAYOUT (FORCED 800x480 VIEWPORT)
-     ========================================== */
-  body { 
-    --brand-green: #247c28; 
-    margin: 0; 
-    padding: 0;
-    background-color: white; 
-    color: var(--brand-green); 
-    text-align: center; 
-    height: 100vh;
-    overflow: hidden; 
-  } 
-  
-  body, input, button { 
-    font-family: 'Inter', sans-serif; 
-  } 
-  
-  /* CONTAINER STACKING TEXT ELEMENTS NATURALLY */
-  .header-container {
-    width: 100%;
-    margin: 0.5rem 0 0 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .title { 
-    margin: 0; 
-    font-size: 1.8rem; 
-    font-weight: 700;
-    line-height: 1.1;
-  } 
-  
-  /* FIXED: FLAT TEXT CENTERED RIGHT UNDER THE WORDS */
-  .source-credit { 
-    margin: 0.15rem 0 0 0 !important; 
-    color: #777 !important; 
-    font-size: 0.7rem !important; /* Smaller text sizing */
-    font-weight: normal !important;
-    background: transparent !important; /* Removes button styling container */
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    position: static !important; /* Snaps text directly back into vertical flow */
-    transform: none !important;
-  } 
-  
-  .row { 
-    display: flex; 
-    flex-direction: row; 
-    height: calc(100vh - 6.8rem); /* Re-balanced to handle header container heights */
-    align-items: center; 
-    padding: 0 2rem;
-    box-sizing: border-box;
-  } 
-  
-  .column { 
-    display: flex; 
-    flex-direction: column; 
-    flex: 1; 
-    justify-content: center; 
-    align-items: center;
-    padding: 0 1rem;
-    height: 100%;
-  } 
-  
-  .column-divider { 
-    width: 1px; 
-    background-color: rgba(36, 124, 40, 0.2); 
-    margin: 1rem 0; 
-    align-self: stretch; 
-  } 
-  
-  /* ==========================================
-     LEFT PANEL BRANDING 
-     ========================================== */
-  .terrorbytes-logo { 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-height: 180px; 
-    margin-bottom: 0.5rem;
-    background: transparent; 
-    border: 0; 
-    user-select: none; 
-    -webkit-user-drag: none; 
-  } 
-  
-  .terrorbytes-logo-image { 
-    max-width: 90%; 
-    max-height: 180px; 
-    object-fit: contain; 
-    user-select: none; 
-    -webkit-user-drag: none; 
-  } 
-  
-  .date { 
-    font-size: 1.1rem; 
-    margin: 0;
-    color: #555;
-  } 
-  
-  .time { 
-    font-size: 2.1rem; 
-    font-weight: 600;
-    font-variant-numeric: tabular-nums; 
-    color: var(--brand-green); 
-    margin-top: 0.15rem; 
-    margin-bottom: 0; 
-  } 
-  
-  /* ==========================================
-     RIGHT PANEL INPUT & DIALER SIZING
-     ========================================== */
-  .pin-panel { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    width: 100%;
-  } 
-  
-  .pin-panel h2 { 
-    display: none; 
-  } 
-  
-  .id-number-input { 
-    width: 100%; 
-    max-width: 340px;
-    font-size: 2.2rem; 
-    margin-bottom: 1rem; 
-    padding: 0.4rem; 
-    caret-color: transparent; 
-    border-radius: 8px; 
-    border: 1px solid #bbb; 
-    text-align: center;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-  } 
-  
-  .id-number-input.shake { animation: shake 0.2s ease-in-out 0s 2; } 
-  @keyframes shake { 
-    0% { margin-left: 0; } 
-    25% { margin-left: 1rem; } 
-    75% { margin-left: -1rem; } 
-    100% { margin-left: 0; } 
-  } 
-  .id-number-input:focus { outline-color: var(--brand-green); } 
-  .id-number-input:disabled { background: #f2f2f2; color: #777; } 
-  
-  .numpad { 
-    width: 100%; 
-    max-width: 340px;
-    margin: 0 auto; 
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 12px; 
-    
-    button { 
-      width: 100%;
-      height: 3.6rem; 
-      font-size: 1.8rem; 
-      font-weight: 500;
-      color: #111;
-      background-color: #eaeaea; 
-      border-radius: 8px; 
-      border: none; 
-      outline: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.1s ease;
-    } 
-    
-    button:active, button.active { 
-      background-color: var(--brand-green); 
-      color: white; 
-    } 
-  } 
-  
-  /* ==========================================
-     FOOTER NOTIFICATION STRIP 
-     ========================================== */
-  /* ==========================================
-   GLOBAL LAYOUT (UPDATED HEIGHT BALANCE)
-   ========================================== */
-.row { 
-  display: flex; 
-  flex-direction: row; 
-  height: calc(100vh - 5.8rem); /* Adjusted down to match the new shorter footer height */
-  align-items: center; 
-  padding: 0 2rem;
-  box-sizing: border-box;
+@font-face { 
+  font-family: 'Inter'; 
+  font-style: normal; 
+  font-weight: 100 900; 
+  font-display: swap; 
+  src: url('../assets/Inter-latin.woff2') format('woff2'); 
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; 
+} 
+
+@font-face { 
+  font-family: 'Inter'; 
+  font-style: normal; 
+  font-weight: 100 900; 
+  font-display: swap; 
+  src: url('../assets/Inter-symbols.woff2') format('woff2'); 
 } 
 
 /* ==========================================
-   FOOTER NOTIFICATION STRIP (SHORTER BASE)
+   GLOBAL LAYOUT (PI TOUCH DISPLAY 2 - 1280x720)
+   ========================================== */
+html {
+  /* Boost base font scaling for higher PPI (210 PPI) on 7-inch 720p panel */
+  font-size: 118%; 
+}
+
+body { 
+  --brand-green: #247c28; 
+  margin: 0; 
+  padding: 0;
+  background-color: white; 
+  color: var(--brand-green); 
+  text-align: center; 
+  height: 100vh;
+  overflow: hidden; 
+  user-select: none;
+  -webkit-user-select: none;
+} 
+
+body, input, button { 
+  font-family: 'Inter', sans-serif; 
+} 
+
+/* CONTAINER STACKING TEXT ELEMENTS NATURALLY */
+.header-container {
+  width: 100%;
+  margin: 0.6rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title { 
+  margin: 0; 
+  font-size: 2rem; 
+  font-weight: 700;
+  line-height: 1.1;
+} 
+
+.source-credit { 
+  margin: 0.2rem 0 0 0 !important; 
+  color: #777 !important; 
+  font-size: 0.8rem !important; 
+  font-weight: normal !important;
+  background: transparent !important; 
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  position: static !important; 
+  transform: none !important;
+} 
+
+.row { 
+  display: flex; 
+  flex-direction: row; 
+  height: calc(100vh - 6.2rem); /* Balanced for 720p viewports */
+  align-items: center; 
+  padding: 0 2.5rem;
+  box-sizing: border-box;
+} 
+
+.column { 
+  display: flex; 
+  flex-direction: column; 
+  flex: 1; 
+  justify-content: center; 
+  align-items: center;
+  padding: 0 1rem;
+  height: 100%;
+} 
+
+.column-divider { 
+  width: 2px; 
+  background-color: rgba(36, 124, 40, 0.2); 
+  margin: 1rem 0; 
+  align-self: stretch; 
+} 
+
+/* ==========================================
+   LEFT PANEL BRANDING 
+   ========================================== */
+.terrorbytes-logo { 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-height: 240px; 
+  margin-bottom: 0.75rem;
+  background: transparent; 
+  border: 0; 
+} 
+
+.terrorbytes-logo-image { 
+  max-width: 90%; 
+  max-height: 240px; 
+  object-fit: contain; 
+} 
+
+.date { 
+  font-size: 1.25rem; 
+  margin: 0;
+  color: #555;
+} 
+
+.time { 
+  font-size: 2.6rem; 
+  font-weight: 600;
+  font-variant-numeric: tabular-nums; 
+  color: var(--brand-green); 
+  margin-top: 0.2rem; 
+  margin-bottom: 0; 
+} 
+
+/* ==========================================
+   RIGHT PANEL INPUT & DIALER SIZING
+   ========================================== */
+.pin-panel { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  width: 100%;
+} 
+
+.pin-panel h2 { 
+  display: none; 
+} 
+
+.id-number-input { 
+  width: 100%; 
+  max-width: 440px; /* Expanded for 16:9 width */
+  font-size: 2.4rem; 
+  margin-bottom: 1rem; 
+  padding: 0.5rem; 
+  caret-color: transparent; 
+  border-radius: 10px; 
+  border: 2px solid #bbb; 
+  text-align: center;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+} 
+
+.id-number-input.shake { animation: shake 0.2s ease-in-out 0s 2; } 
+@keyframes shake { 
+  0% { transform: translateX(0); } 
+  25% { transform: translateX(1rem); } 
+  75% { transform: translateX(-1rem); } 
+  100% { transform: translateX(0); } 
+}
+
+@keyframes flash-red {
+  0% { background-color: #fee2e2; color: #991b1b; transform: translateY(0); }
+  50% { background-color: #fecaca; color: #7f1d1d; transform: translateY(-3px); }
+  100% { background-color: #fee2e2; color: #991b1b; transform: translateY(0); }
+}
+
+.id-number-input:focus { outline: none; border-color: var(--brand-green); } 
+.id-number-input:disabled { background: #f2f2f2; color: #777; } 
+
+.numpad { 
+  width: 100%; 
+  max-width: 440px; /* Expanded width for finger tapping */
+  margin: 0 auto; 
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 14px; 
+}
+
+.numpad button { 
+  width: 100%;
+  height: 4.6rem; /* Enlarged hit zone for touch accuracy */
+  font-size: 2rem; 
+  font-weight: 600;
+  color: #111;
+  background-color: #eaeaea; 
+  border-radius: 10px; 
+  border: none; 
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.1s ease;
+  touch-action: manipulation;
+} 
+
+.numpad button:active, 
+.numpad button.active { 
+  background-color: var(--brand-green); 
+  color: white; 
+}
+
+.user-not-found-message {
+  width: 100%;
+  max-width: 440px;
+  margin-top: 0.8rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center;
+  background-color: #fee2e2;
+  color: #991b1b;
+  animation: flash-red 0.8s ease-in-out 1;
+}
+
+/* ==========================================
+   FOOTER NOTIFICATION STRIP 
    ========================================== */
 .footer { 
   position: fixed !important; 
   bottom: 0 !important; 
   left: 0 !important; 
   right: 0 !important; 
-  height: 3.5rem !important;  /* FIXED: Reduced from 4.5rem to make the bar shorter */
+  height: 4rem !important;  
   display: flex !important; 
   align-items: center !important; 
   justify-content: center !important; 
@@ -233,7 +244,7 @@
 } 
 
 .prompt { 
-  font-size: 1.15rem !important; /* Scaled down slightly to fit cleanly within the shorter bar */
+  font-size: 1.25rem !important; 
   margin: 0 !important; 
   display: block !important;
   text-align: center !important; 
@@ -242,28 +253,26 @@
   width: 100% !important; 
   line-height: 1.25 !important;       
 }
-  
-  .footer.ok, .footer.error { 
-    background-color: var(--brand-green) !important; 
-  } 
-  @keyframes blinker { 50% { background-color: #f88; } } 
-  
-  /* ==========================================
-     ADMIN SETTINGS MODAL INTERFACES
-     ========================================== */
-  /* ========================================== ADMIN SETTINGS MODAL INTERFACES ========================================== */
+
+.footer.ok, .footer.error { 
+  background-color: var(--brand-green) !important; 
+} 
+
+/* ==========================================
+   ADMIN SETTINGS MODAL INTERFACES
+   ========================================== */
 .modal {
   position: absolute;
   inset: 30px;
   border: 1px solid rgb(204, 204, 204);
   background: white;
   overflow: auto;
-  border-radius: 8px;
+  border-radius: 10px;
   outline: none;
-  padding: 20px;
+  padding: 24px;
   color: black;
-  font-size: 0.9rem;
-  box-sizing: border-box; /* Ensures padding doesn't cause hidden overflows */
+  font-size: 1rem;
+  box-sizing: border-box; 
 }
 
 .export-modal {
@@ -272,183 +281,164 @@
   border: none;
   width: 100%;
   height: 100%;
-  max-height: none;
-  min-height: 100%;
 }
 
 .modal h2 {
-    margin: 0 0 1rem 0; /* Add bottom spacing below headers */
-    font-size: 1.5rem;
-  }
+  margin: 0 0 1rem 0;
+  font-size: 1.75rem;
+}
 
-  .modal .modal-close-button {
-    position: absolute;
-    top: 0;
-    right: 0;
-    padding: 20px;
-    font-size: 1.5rem;
-    border: none;
-    background: none;
-    cursor: pointer;
-    transition: none;
-  }
+.modal .modal-close-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 20px;
+  font-size: 1.8rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
 
-  .modal .modal-close-button:active {
-    background: none;
-    color: black;
-    transition: none;
-  }
+.modal .today-stats {
+  margin: 0.75rem 0;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  font-weight: 500;
+}
 
-  .modal .today-stats {
-    margin: 0.75rem 0;
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-    font-weight: 500;
-  }
+.modal label {
+  font-size: 1.1rem;
+  display: inline-block;
+  margin-bottom: 0.25rem;
+}
 
-  .modal label {
-    font-size: 1rem;
-    display: inline-block;
-    margin-bottom: 0.25rem;
-  }
+.modal input, .modal button {
+  font-size: 1.1rem;
+  border-radius: 8px;
+  border: 1px solid grey;
+  padding: 0.6rem;
+  transition: all 0.2s ease-in;
+  box-sizing: border-box;
+}
 
-  .modal input, .modal button {
-    font-size: 1rem;
-    border-radius: 8px;
-    border: 1px solid grey;
-    padding: 0.5rem;
-    transition: all 0.2s ease-in;
-    box-sizing: border-box;
-  }
+.modal button:enabled:active {
+  background-color: var(--brand-green);
+  color: white;
+}
 
-  .modal button:enabled:active {
-    background-color: var(--brand-green);
-    color: white;
-    transition: all 0.1s ease-out;
-  }
+.modal .modal-row {
+  margin-top: 1rem;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
 
-  .modal .modal-row {
-    margin-top: 1rem;
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-  }
+.modal .date-input {
+  text-align: center;
+}
 
-  .modal .date-input {
-    text-align: center;
-  }
+.modal .date-range {
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
 
-  .modal .date-range {
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
+.modal #meeting-threshold {
+  width: 110px;
+  text-align: center;
+}
 
-  .modal #meeting-threshold {
-    width: 100px;
-    text-align: center;
-  }
+.modal input[type="radio"] {
+  transform: scale(1.5);
+  margin-left: 1rem;
+  margin-right: 0.5rem;
+}
 
-  .modal input[type="radio"] {
-    transform: scale(1.5);
-    margin-left: 1rem;
-    margin-right: 0.5rem;
-  }
+.modal .meeting-threshold-button {
+  width: 55px;
+  margin: 0 0.5rem;
+}
 
-  .modal #meeting-threshold::-webkit-outer-spin-button,
-  .modal #meeting-threshold::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
+.modal .modal-submit-button {
+  margin: 0.25rem;
+}
 
-  .modal .meeting-threshold-button {
-    width: 50px;
-    margin: 0 0.5rem;
-  }
+.modal .two-column {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  margin-top: 1rem;
+}
 
-  .modal .modal-submit-button {
-    margin: 0.25rem;
-  }
+.modal .two-column .column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center; 
+  justify-content: flex-start;
+  padding: 0;
+  height: auto; 
+}
 
-  /* Two-column layout for export modal actions and report types */
-  .modal .two-column {
-    display: flex;
-    flex-direction: row;
-    gap: 1rem;
-    align-items: flex-start;
-    justify-content: center;
-    width: 100%;
-    margin-top: 1rem;
-  }
+.modal .actions-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
 
-  /* Isolated modal column rules to prevent picking up global .column properties */
-  .modal .two-column .column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: center; 
-    justify-content: flex-start;
-    padding: 0;
-    height: auto; 
-  }
+.modal .actions-column .main-action,
+.modal .report-option .report-select,
+.modal .import-btn { 
+  width: 280px;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  background: white;
+  border: 1px solid #bbb;
+}
 
-  .modal .actions-column {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    align-items: center;
-  }
+.modal .reports-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
 
-  /* Adjusted buttons for uniform layout and sizing matching your reference image */
-  .modal .actions-column .main-action,
-  .modal .report-option .report-select,
-  .modal .import-btn { 
-    width: 240px;
-    padding: 0.65rem 1rem;
-    text-align: center;
-    cursor: pointer;
-    background: white;
-    border: 1px solid #bbb;
-  }
+.modal .report-option {
+  width: 280px;
+}
 
-  .modal .reports-column {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    align-items: center;
-  }
+.modal .report-select {
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+  background: #f6f6f6;
+  border: 1px solid #cfcfcf;
+}
 
-  .modal .report-option {
-    width: 240px;
-  }
+.modal .report-option.selected .report-select {
+  background: var(--brand-green);
+  color: white;
+  border-color: var(--brand-green);
+}
 
-  .modal .report-select {
-    width: 100%;
-    text-align: center;
-    cursor: pointer;
-    background: #f6f6f6;
-    border: 1px solid #cfcfcf;
-  }
-
-  .modal .report-option.selected .report-select {
-    background: var(--brand-green);
-    color: white;
-    border-color: var(--brand-green);
-  }
-
-  .build-footer {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    font-size: 0.75rem;
-  }
+.build-footer {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  font-size: 0.8rem;
+}
