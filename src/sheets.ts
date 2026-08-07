@@ -71,7 +71,7 @@ export async function uploadReportsToSheet(attendanceCsv: string, meetingCsv: st
     uploads.push( 
       sheets.spreadsheets.values.append({ 
         spreadsheetId: sheetId, 
-        range: `Checkins!A1`, 
+        range: `rawData!A1`, 
         valueInputOption: "USER_ENTERED", 
         insertDataOption: "INSERT_ROWS", 
         requestBody: { values }, 
