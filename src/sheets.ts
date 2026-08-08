@@ -8,76 +8,106 @@ async function getSheetsClient() {
   if (!sheetId) throw new Error("GOOGLE_SHEET_ID environment variable is not set"); 
   if (!creds) throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON environment variable is not set"); 
 
-  const credentials = JSON.parse(creds);
-
-  // FIX 1: Handle escaped newline characters safely in the private key
-  if (credentials.private_key) {
-    credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+  let credentials;
+  try {
+    credentials = JSON.parse(creds);
+  } catch (err) {
+    throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON: " + String(err));
   }
 
-  const auth = new google.auth.GoogleAuth({ 
-    credentials, 
-    scopes: ["https://googleapis.com"], 
-  }); 
+  if (!credentials.client_email || !credentials.private_key) {
+    throw new Error(
+      "GOOGLE_SERVICE_ACCOUNT_JSON must include client_email and private_key"
+    );
+  }
+
+  // Handle escaped newline characters safely in the private key
+  credentials.private_key = credentials.private_key.replace(/\\n/g, "\n");
+
+  const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
 
   // FIX 2: Pass 'auth' directly to avoid TypeScript 'auth.getClient()' type conflicts
   const sheets = google.sheets({ version: "v4", auth }); 
 
-  return { sheets, sheetId }; 
-} 
+  return { sheets, sheetId };
+}
 
-function csvToValues(csv: string): any[][] { 
-  try { 
-    const records = csvParse(csv, { columns: false, skip_empty_lines: true }); 
-    return records as any[][]; 
-  } catch (err) { 
-    return csv 
-      .split("\n") .map((r) => r.split(",")); 
-  } 
-} 
+async function ensureRawDataSheetExists(sheets: any, sheetId: string) {
+  const metadata = await sheets.spreadsheets.get({
+    spreadsheetId: sheetId,
+    fields: "sheets.properties.title",
+  });
+  const sheetsList = metadata.data.sheets || [];
+  const rawDataSheet = sheetsList.find((sheet: any) => sheet.properties?.title === "rawData");
 
-export async function uploadReportsToSheet(attendanceCsv: string, meetingCsv: string, checkinCsv: string) { 
-  const { sheets, sheetId } = await getSheetsClient(); 
-  const uploads: Array<Promise<any>> = []; 
+  if (!rawDataSheet) {
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: sheetId,
+      requestBody: {
+        requests: [
+          {
+            addSheet: {
+              properties: {
+                title: "rawData",
+              },
+            },
+          },
+        ],
+      },
+    });
 
-  if (attendanceCsv && attendanceCsv.trim().length > 0) { 
-    const values = csvToValues(attendanceCsv); 
-    uploads.push( 
-      sheets.spreadsheets.values.append({ 
-        spreadsheetId: sheetId, 
-        range: `AttendanceReport!A1`, 
-        valueInputOption: "USER_ENTERED", 
-        insertDataOption: "INSERT_ROWS", 
-        requestBody: { values }, 
-      }), 
-    ); 
-  } 
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: "rawData!A1:D1",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [["First Name", "Last Name", "Date", "Hours"]],
+      },
+    });
+  }
+}
 
-  if (meetingCsv && meetingCsv.trim().length > 0) { 
-    const values = csvToValues(meetingCsv); 
-    uploads.push( 
-      sheets.spreadsheets.values.append({ 
-        spreadsheetId: sheetId, 
-        range: `MeetingReport!A1`, 
-        valueInputOption: "USER_ENTERED", 
-        insertDataOption: "INSERT_ROWS", 
-        requestBody: { values }, 
-      }), 
-    ); 
-  } 
+function csvToValues(csv: string, stripHeader = false): any[][] {
+  try {
+    const records = csvParse(csv, { columns: false, skip_empty_lines: true });
+    return stripHeader && records.length > 0 ? (records as any[][]).slice(1) : (records as any[][]);
+  } catch (err) {
+    const rows = csv
+      .split("\n")
+      .map((r) => r.split(","))
+      .filter((row) => row.some((col) => col.trim() !== ""));
+    return stripHeader && rows.length > 0 ? rows.slice(1) : rows;
+  }
+}
 
-  if (checkinCsv && checkinCsv.trim().length > 0) { 
-    const values = csvToValues(checkinCsv); 
-    uploads.push( 
-      sheets.spreadsheets.values.append({ 
-        spreadsheetId: sheetId, 
-        range: `Checkins!A1`, 
-        valueInputOption: "USER_ENTERED", 
-        insertDataOption: "INSERT_ROWS", 
-        requestBody: { values }, 
-      }), 
-    ); 
-  } 
+export async function uploadReportsToSheet(checkinInput: string | string[][]) {
+  const { sheets, sheetId } = await getSheetsClient();
+  await ensureRawDataSheetExists(sheets, sheetId);
 
-  await Promise.all(uploads); 
+  if (!checkinInput) return;
+
+  let values: any[][] = [];
+
+  // Handle input whether generateCheckinData returns a CSV string OR a 2D Array
+  if (typeof checkinInput === "string") {
+    if (checkinInput.trim().length === 0) return;
+    values = csvToValues(checkinInput, true);
+  } else if (Array.isArray(checkinInput)) {
+    if (checkinInput.length === 0) return;
+    // Strip header row if present in 2D array
+    const hasHeader = checkinInput[0] && String(checkinInput[0][0]).toLowerCase().includes("first");
+    values = hasHeader ? checkinInput.slice(1) : checkinInput;
+  }
+
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: sheetId,
+    range: `rawData!A1`,
+    valueInputOption: "USER_ENTERED",
+    insertDataOption: "INSERT_ROWS",
+    requestBody: { values },
+  });
 }

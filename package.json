@@ -25,6 +25,7 @@
     "@electron-forge/plugin-fuses": "^7.4.0",
     "@electron-forge/plugin-webpack": "^7.4.0",
     "@electron/fuses": "^1.8.0",
+    "@types/node": "^26.2.0",
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -50,6 +51,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@slack/bolt": "^5.0.0",
     "@slack/web-api": "^7.19.0",
     "@types/node-schedule": "^2.1.7",
     "csv-parse": "^5.6.0",

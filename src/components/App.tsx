@@ -15,12 +15,13 @@ const PROMPT_SUCCESS = "Check-in recorded";
 const PROMPT_CLOSED = "Attendance closed";
 const PROMPT_CLOSED_EMAIL = "Attendance closed and email sent";
 const PROMPT_EXPORT = "Export reports";
+const PROMPT_USER_NOT_FOUND = "User not Found.";
 
 export default function App() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [lastPromptTime, setLastPromptTime] = useState(null);
   const [promptText, setPromptText] = useState(PROMPT_LOCKED);
-  const [hasFocus, setHasFocus] = useState(false);
+  const [hasFocus, setHasFocus] = useState(() => typeof document !== "undefined" && document.hasFocus());
   const [showRoster, setShowRoster] = useState(false);
   const [attendance, setAttendance] = useState<CurrentAttendanceEntry[]>([]);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -95,6 +96,9 @@ export default function App() {
       timeout = setTimeout(() => setPromptText(PROMPT_LOCKED), 10000);
     } else if (promptText === PROMPT_WRONG_PIN) {
       timeout = setTimeout(() => setPromptText(PROMPT_LOCKED), 10000);
+    } else if (promptText === PROMPT_USER_NOT_FOUND) {
+      // Show the user-not-found message briefly then revert to scan prompt
+      timeout = setTimeout(() => setPromptText(PROMPT_SCAN), 1200);
     }
     return () => {
       if (timeout) {
@@ -106,12 +110,35 @@ export default function App() {
   useEffect(() => {
     const handleFocus = () => setHasFocus(true);
     const handleBlur = () => setHasFocus(false);
+    const activateFocus = () => {
+      try {
+        window.focus();
+      } catch {
+        // focus may fail in some environments; still set state so the modal closes.
+      }
+      setHasFocus(true);
+    };
+
     window.addEventListener("focus", handleFocus);
     window.addEventListener("blur", handleBlur);
+    window.addEventListener("pointerdown", activateFocus);
+    window.addEventListener("mousedown", activateFocus);
+    window.addEventListener("touchstart", activateFocus);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        setHasFocus(document.hasFocus());
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     window.electron.getEnabledActions().then(setEnabledActions);
+
     return () => {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("pointerdown", activateFocus);
+      window.removeEventListener("mousedown", activateFocus);
+      window.removeEventListener("touchstart", activateFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -135,12 +162,19 @@ export default function App() {
     footerClass += " ok";
   } else if (promptText === PROMPT_WRONG_PIN || promptText === PROMPT_CLOSE_ERROR) {
     footerClass += " error";
+  } else if (promptText === PROMPT_USER_NOT_FOUND) {
+    footerClass += " user-not-found";
   }
 
   return (
     <>
-      <Modal className="modal focus-modal" isOpen={!hasFocus}>
-        <div className="focus-modal-content" onClick={() => setHasFocus(true)}>
+      <Modal
+        className="modal focus-modal"
+        isOpen={!hasFocus}
+        shouldCloseOnOverlayClick={true}
+        shouldCloseOnEsc={true}
+        onRequestClose={() => setHasFocus(true)}>
+        <div className="focus-modal-content" onClick={() => setHasFocus(true)} onPointerDown={() => setHasFocus(true)}>
           <h1>Please tap the screen to continue</h1>
         </div>
       </Modal>
@@ -166,10 +200,10 @@ export default function App() {
           {!isUnlocked ? (
             <div className="pin-panel">
               <h2>Admin PIN Required</h2>
-              <Form isUnlocked={false} isActive={true} onAdminCode={handleAdminCode} onSuccess={(name) => { refreshAttendance(); handleSubmit(name); }} />
+              <Form isUnlocked={false} isActive={true} onAdminCode={handleAdminCode} onSuccess={(name) => { refreshAttendance(); handleSubmit(name); }} onUserNotFound={() => { setPromptText(PROMPT_USER_NOT_FOUND); setLastPromptTime(new Date()); }} />
             </div>
           ) : (
-            <Form isUnlocked={true} isActive={true} onAdminCode={handleAdminCode} onSuccess={(name) => { refreshAttendance(); handleSubmit(name); }} />
+            <Form isUnlocked={true} isActive={true} onAdminCode={handleAdminCode} onSuccess={(name) => { refreshAttendance(); handleSubmit(name); }} onUserNotFound={() => { setPromptText(PROMPT_USER_NOT_FOUND); setLastPromptTime(new Date()); }} />
           )}
         </div>
       </div>

@@ -6,25 +6,39 @@ interface FormProps {
   isActive: boolean; 
   onAdminCode: (pin: string) => Promise<AdminCodeAction | null>; 
   onSuccess: (name: string) => void; 
+  onUserNotFound?: () => void; 
 } 
 
 function isDigit(c: string) { 
   return c >= "0" && c <= "9"; 
 } 
 
-export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: FormProps) { 
+export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess, onUserNotFound }: FormProps) { 
   const [value, setValue] = useState(""); 
   const [isLastInputFromNumpad, setIsLastInputFromNumpad] = useState(false); 
-  const [lastShakeTime, setLastShakeTime] = useState(null); 
+  const [lastShakeTime, setLastShakeTime] = useState<Date | null>(null); 
   const [isShaking, setIsShaking] = useState(false); 
-  const [backspaceDownTime, setBackspaceDownTime] = useState(null); 
+  const [backspaceDownTime, setBackspaceDownTime] = useState<Date | null>(null); 
   const [activeButton, setActiveButton] = useState<string | null>(null); 
-
+  const [validStudentIds, setValidStudentIds] = useState<string[]>([]);
+  
   function handleNumpadButtonClick(e: React.MouseEvent<HTMLButtonElement>) { 
-    const value = e.currentTarget.value; 
-    setValue(current => current + value); 
-    setIsLastInputFromNumpad(true); 
+    const digit = e.currentTarget.value; 
+    const nextValue = value + digit;
+    setValue(nextValue);
+    setIsLastInputFromNumpad(true);
   } 
+
+  function isPrefixMatch(candidate: string) {
+    if (candidate.length === 0) {
+      return true;
+    }
+    return validStudentIds.some((id) => id.startsWith(candidate));
+  }
+
+  function isKnownStudentTag(candidate: string) {
+    return validStudentIds.includes(candidate);
+  }
 
   function handleBackspaceDown(e: React.PointerEvent<HTMLButtonElement>) { 
     handleButtonActive(e); 
@@ -46,42 +60,66 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: F
   } 
 
   function handleChangeFromKeyboardInput(e: React.ChangeEvent<HTMLInputElement>) { 
-    const value = e.target.value; 
-    if (isLastInputFromNumpad && (e.nativeEvent as InputEvent).inputType === "deleteContentBackward") { 
-      setValue(""); 
-    } else if (value.length === 0) { 
-      setValue(""); 
-    } else if (isDigit(value[value.length - 1])) { 
-      if (isLastInputFromNumpad) { 
-        setValue(value[value.length - 1]); 
-      } else { 
-        setValue(value); 
-      } 
-      setIsLastInputFromNumpad(false); 
-    } 
+    const nextValue = e.target.value;
+    if (isLastInputFromNumpad && (e.nativeEvent as InputEvent).inputType === "deleteContentBackward") {
+      setValue("");
+      return;
+    }
+
+    if (nextValue.length === 0) {
+      setValue("");
+      return;
+    }
+
+    if (!isDigit(nextValue[nextValue.length - 1])) {
+      return;
+    }
+
+    if (isLastInputFromNumpad) {
+      setValue(nextValue[nextValue.length - 1]);
+    } else {
+      setValue(nextValue);
+    }
+    setIsLastInputFromNumpad(false);
   } 
 
   async function handleSubmit(event: React.FormEvent) { 
     event.preventDefault(); 
-    if (!isUnlocked || value.length !== 10) { 
-      const action = await onAdminCode(value); 
-      if (action === null) { 
-        setValue(""); 
-        setLastShakeTime(new Date()); 
-        return; 
-      } 
-      setValue(""); 
-      return; 
-    } 
+
+    // 1. Check if the entered code is an admin or export PIN via IPC
+    const adminAction = await onAdminCode(value);
+    if (adminAction !== null) {
+      setValue("");
+      return;
+    }
+
+    // 2. If screen is locked and code was not a valid PIN, shake input and reset
+    if (!isUnlocked) {
+      setValue("");
+      setLastShakeTime(new Date());
+      return;
+    }
+
+    // 3. Screen is unlocked: proceed with standard student ID validation
+    if (value.length !== 10 || (validStudentIds.length > 0 && !isKnownStudentTag(value))) {
+      if (typeof onUserNotFound === "function") {
+        onUserNotFound();
+      }
+      setValue("");
+      return;
+    }
+
+    const response = await window.electron.submit(value);
+    if (!response.success) {
+      if (typeof onUserNotFound === "function") {
+        onUserNotFound();
+      }
+      setValue("");
+      return;
+    }
     
-    const response = await window.electron.submit(value); 
-    if (!response.success) { 
-      return; 
-    } 
+    setValue("");
     
-    setValue(""); 
-    
-    // FIXED: Fall back to showing the input ID number string if the database name is empty
     const clientName = response.name || `ID #${value}`;
     onSuccess(clientName); 
   } 
@@ -112,13 +150,17 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: F
     return () => clearTimeout(timeout); 
   }, [lastShakeTime]); 
 
-  useEffect(() => { 
-    if (backspaceDownTime === null) { 
-      return; 
-    } 
-    const timeout = setTimeout(() => setValue(""), 500); 
-    return () => clearTimeout(timeout); 
-  }, [backspaceDownTime]); 
+  useEffect(() => {
+    if (backspaceDownTime === null) {
+      return;
+    }
+    const timeout = setTimeout(() => setValue(""), 500);
+    return () => clearTimeout(timeout);
+  }, [backspaceDownTime]);
+
+  useEffect(() => {
+    window.electron.getStudentIds().then(setValidStudentIds);
+  }, []);
 
   return (
     <div> 
@@ -178,7 +220,7 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: F
         > 
           ⏎ 
         </button> 
-      </div> 
+      </div>
     </div> 
   ); 
 }

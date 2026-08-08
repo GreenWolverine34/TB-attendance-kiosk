@@ -7,7 +7,7 @@ function ensureKioskTabs() {
   const tabs = [
     { name: 'AttendanceReport', headers: ['Timestamp', 'ID', 'First Name', 'Last Name', 'Status'] },
     { name: 'MeetingReport', headers: ['Meeting Date', 'Total Checkins', 'Total Checkouts', 'Checkout Rate'] },
-    { name: 'Checkins', headers: ['Timestamp', 'ID', 'First Name', 'Last Name'] },
+    { name: 'rawData', headers: ['First Name', 'Last Name', 'Date', 'Total Hours'] },
   ];
 
   tabs.forEach(function(tabSpec) {
