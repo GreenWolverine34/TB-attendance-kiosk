@@ -83,18 +83,25 @@ function csvToValues(csv: string, stripHeader = false): any[][] {
   }
 }
 
-export async function uploadReportsToSheet(checkinCsv: string) {
+export async function uploadReportsToSheet(checkinInput: string | string[][]) {
   const { sheets, sheetId } = await getSheetsClient();
   await ensureRawDataSheetExists(sheets, sheetId);
 
-  if (!checkinCsv || checkinCsv.trim().length === 0) {
-    return;
+  if (!checkinInput) return;
+
+  let values: any[][] = [];
+
+  // Handle input whether generateCheckinData returns a CSV string OR a 2D Array
+  if (typeof checkinInput === "string") {
+    if (checkinInput.trim().length === 0) return;
+    values = csvToValues(checkinInput, true);
+  } else if (Array.isArray(checkinInput)) {
+    if (checkinInput.length === 0) return;
+    // Strip header row if present in 2D array
+    const hasHeader = checkinInput[0] && String(checkinInput[0][0]).toLowerCase().includes("first");
+    values = hasHeader ? checkinInput.slice(1) : checkinInput;
   }
 
-  const values = csvToValues(checkinCsv, true);
-  if (values.length === 0) {
-    return;
-  }
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: sheetId,
