@@ -85,26 +85,23 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess, onU
 
   async function handleSubmit(event: React.FormEvent) { 
     event.preventDefault(); 
-    if (!isUnlocked) {
-      const action = await onAdminCode(value);
-      if (action === null) {
-        setValue("");
-        setLastShakeTime(new Date());
-        return;
-      }
+
+    // 1. Check if the entered code is an admin or export PIN via IPC
+    const adminAction = await onAdminCode(value);
+    if (adminAction !== null) {
       setValue("");
       return;
     }
 
-    const env1 = typeof process !== "undefined" ? process.env.ATTENDANCE_KIOSK_PIN : undefined;
-    const env2 = typeof process !== "undefined" ? process.env.ATTENDANCE_EXPORT_PIN : undefined;
+    // 2. If screen is locked and code was not a valid PIN, shake input and reset
+    if (!isUnlocked) {
+      setValue("");
+      setLastShakeTime(new Date());
+      return;
+    }
 
-    const isEnvOverride = Boolean(
-      (env1 && value === env1) || 
-      (env2 && value === env2)
-    );
-
-    if (!isEnvOverride && (value.length !== 10 || (validStudentIds.length > 0 && !isKnownStudentTag(value)))) {
+    // 3. Screen is unlocked: proceed with standard student ID validation
+    if (value.length !== 10 || (validStudentIds.length > 0 && !isKnownStudentTag(value))) {
       if (typeof onUserNotFound === "function") {
         onUserNotFound();
       }

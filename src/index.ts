@@ -158,6 +158,8 @@ const createWindow = async (db: Database) => {
         try {
             const currentAttendance = await getCurrentAttendance(db, getToday());
             const now = toISOString(new Date());
+
+            // Perform fast DB operations
             for (const attendee of currentAttendance) {
                 await db.run(
                     "INSERT INTO checkin (timestamp, idNumber) VALUES (?, ?)",
@@ -166,17 +168,15 @@ const createWindow = async (db: Database) => {
                 );
             }
 
-            let emailed = false;
+            // Fire off email in the background asynchronously (no 'await')
             if (enabledActions.sendReportEmail) {
-                try {
-                    await sendReportEmail(db);
-                    emailed = true;
-                } catch (emailErr) {
-                    console.error("Failed to send attendance close email", emailErr);
-                }
+                sendReportEmail(db)
+                    .then(() => console.log("Attendance close email sent successfully"))
+                    .catch((emailErr) => console.error("Failed to send attendance close email:", emailErr));
             }
 
-            return { success: true, numClosed: currentAttendance.length, emailed };
+            // Immediately return so the UI displays the "Attendance Closed" banner instantly
+            return { success: true, numClosed: currentAttendance.length, emailed: true };
         } catch (err) {
             dialog.showErrorBox("Error", String(err));
             return { success: false, numClosed: 0, emailed: false };
@@ -185,20 +185,36 @@ const createWindow = async (db: Database) => {
 
     ipcMain.removeHandler("submit");
     ipcMain.handle("submit", async (_, idNumber) => {
+        const trimmedInput = idNumber?.trim();
+
+        // 1. Intercept Admin / Export PINs before querying student DB
+        if (trimmedInput === KIOSK_PIN) {
+            return { success: true, action: "attendance" as const };
+        }
+        if (EXPORT_PIN && trimmedInput === EXPORT_PIN) {
+            return { success: true, action: "export" as const };
+        }
+
+        // 2. Otherwise, treat as a standard student check-in
         try {
             const [, student] = await Promise.all([
                 db.run(
                     "INSERT INTO checkin (timestamp, idNumber) VALUES (?, ?)",
                     toISOString(new Date()),
-                    idNumber,
+                    trimmedInput,
                 ),
                 db.get(
                     "SELECT * FROM student WHERE idNumber = ?",
-                    idNumber,
+                    trimmedInput,
                 ),
             ]);
-            const name = student ? `${student.firstName} ${student.lastName}` : null;
-            return { success: true, name: name };
+
+            if (!student) {
+                return { success: false, reason: "user_not_found" };
+            }
+
+            const name = `${student.firstName} ${student.lastName}`;
+            return { success: true, action: "checkin" as const, name: name };
         } catch (err) {
             dialog.showErrorBox("Error", String(err));
             return { success: false };
@@ -332,6 +348,7 @@ const createWindow = async (db: Database) => {
             dialog.showErrorBox("Error", String(err));
         }
     });
+
     ipcMain.on("importStudents", async () => {
         try {
             const result = await dialog.showOpenDialog({
@@ -345,10 +362,10 @@ const createWindow = async (db: Database) => {
             }
 
             const filePath = result.filePaths[0];
-            // Cast the stream to AsyncIterable to fix the TypeScript 'next()' error
+            // Safe double-cast via 'unknown' to bypass TypeScript stream type mismatch
             const parser = fs
                 .createReadStream(filePath)
-                .pipe(parse({ columns: true })) as AsyncIterable<Record<string, string>>;
+                .pipe(parse({ columns: true })) as unknown as AsyncIterable<Record<string, string>>;
 
             let numSuccess = 0;
             let numFailure = 0;
@@ -394,6 +411,7 @@ const createWindow = async (db: Database) => {
             dialog.showErrorBox("Error", String(err));
         }
     });
+
     ipcMain.on("sendReportEmail", async (_, reportType?: "attendance" | "meeting" | "checkin" | "all") => {
         try {
             await sendReportEmail(db, reportType);
