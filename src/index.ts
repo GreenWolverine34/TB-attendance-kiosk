@@ -332,7 +332,6 @@ const createWindow = async (db: Database) => {
             dialog.showErrorBox("Error", String(err));
         }
     });
-
     ipcMain.on("importStudents", async () => {
         try {
             const result = await dialog.showOpenDialog({
@@ -346,9 +345,10 @@ const createWindow = async (db: Database) => {
             }
 
             const filePath = result.filePaths[0];
+            // Cast the stream to AsyncIterable to fix the TypeScript 'next()' error
             const parser = fs
                 .createReadStream(filePath)
-                .pipe(parse({ columns: true }));
+                .pipe(parse({ columns: true })) as AsyncIterable<Record<string, string>>;
 
             let numSuccess = 0;
             let numFailure = 0;
@@ -394,7 +394,6 @@ const createWindow = async (db: Database) => {
             dialog.showErrorBox("Error", String(err));
         }
     });
-
     ipcMain.on("sendReportEmail", async (_, reportType?: "attendance" | "meeting" | "checkin" | "all") => {
         try {
             await sendReportEmail(db, reportType);

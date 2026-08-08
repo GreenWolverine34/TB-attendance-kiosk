@@ -15,6 +15,7 @@ const PROMPT_SUCCESS = "Check-in recorded";
 const PROMPT_CLOSED = "Attendance closed";
 const PROMPT_CLOSED_EMAIL = "Attendance closed and email sent";
 const PROMPT_EXPORT = "Export reports";
+const PROMPT_USER_NOT_FOUND = "User not Found.";
 
 export default function App() {
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -95,6 +96,9 @@ export default function App() {
       timeout = setTimeout(() => setPromptText(PROMPT_LOCKED), 10000);
     } else if (promptText === PROMPT_WRONG_PIN) {
       timeout = setTimeout(() => setPromptText(PROMPT_LOCKED), 10000);
+    } else if (promptText === PROMPT_USER_NOT_FOUND) {
+      // Show the user-not-found message briefly then revert to scan prompt
+      timeout = setTimeout(() => setPromptText(PROMPT_SCAN), 1200);
     }
     return () => {
       if (timeout) {
@@ -158,6 +162,8 @@ export default function App() {
     footerClass += " ok";
   } else if (promptText === PROMPT_WRONG_PIN || promptText === PROMPT_CLOSE_ERROR) {
     footerClass += " error";
+  } else if (promptText === PROMPT_USER_NOT_FOUND) {
+    footerClass += " user-not-found";
   }
 
   return (
@@ -194,10 +200,10 @@ export default function App() {
           {!isUnlocked ? (
             <div className="pin-panel">
               <h2>Admin PIN Required</h2>
-              <Form isUnlocked={false} isActive={true} onAdminCode={handleAdminCode} onSuccess={(name) => { refreshAttendance(); handleSubmit(name); }} />
+              <Form isUnlocked={false} isActive={true} onAdminCode={handleAdminCode} onSuccess={(name) => { refreshAttendance(); handleSubmit(name); }} onUserNotFound={() => { setPromptText(PROMPT_USER_NOT_FOUND); setLastPromptTime(new Date()); }} />
             </div>
           ) : (
-            <Form isUnlocked={true} isActive={true} onAdminCode={handleAdminCode} onSuccess={(name) => { refreshAttendance(); handleSubmit(name); }} />
+            <Form isUnlocked={true} isActive={true} onAdminCode={handleAdminCode} onSuccess={(name) => { refreshAttendance(); handleSubmit(name); }} onUserNotFound={() => { setPromptText(PROMPT_USER_NOT_FOUND); setLastPromptTime(new Date()); }} />
           )}
         </div>
       </div>

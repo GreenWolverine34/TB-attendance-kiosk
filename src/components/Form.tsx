@@ -6,38 +6,28 @@ interface FormProps {
   isActive: boolean; 
   onAdminCode: (pin: string) => Promise<AdminCodeAction | null>; 
   onSuccess: (name: string) => void; 
+  onUserNotFound?: () => void; 
 } 
 
 function isDigit(c: string) { 
   return c >= "0" && c <= "9"; 
 } 
 
-export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: FormProps) { 
+export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess, onUserNotFound }: FormProps) { 
   const [value, setValue] = useState(""); 
   const [isLastInputFromNumpad, setIsLastInputFromNumpad] = useState(false); 
-  const [lastShakeTime, setLastShakeTime] = useState(null); 
+  const [lastShakeTime, setLastShakeTime] = useState<Date | null>(null); 
   const [isShaking, setIsShaking] = useState(false); 
-  const [backspaceDownTime, setBackspaceDownTime] = useState(null); 
+  const [backspaceDownTime, setBackspaceDownTime] = useState<Date | null>(null); 
   const [activeButton, setActiveButton] = useState<string | null>(null); 
   const [validStudentIds, setValidStudentIds] = useState<string[]>([]);
-  const [showUserNotFound, setShowUserNotFound] = useState(false);
-  const [lastUserNotFoundTime, setLastUserNotFoundTime] = useState<Date | null>(null);
   
   function handleNumpadButtonClick(e: React.MouseEvent<HTMLButtonElement>) { 
     const digit = e.currentTarget.value; 
     const nextValue = value + digit;
-    if (isUnlocked && validStudentIds.length > 0 && !isPrefixMatch(nextValue)) {
-      triggerUserNotFound();
-      return;
-    }
     setValue(nextValue);
     setIsLastInputFromNumpad(true);
-    setShowUserNotFound(false);
   } 
-
-  function triggerUserNotFound() {
-    setLastUserNotFoundTime(new Date());
-  }
 
   function isPrefixMatch(candidate: string) {
     if (candidate.length === 0) {
@@ -73,22 +63,15 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: F
     const nextValue = e.target.value;
     if (isLastInputFromNumpad && (e.nativeEvent as InputEvent).inputType === "deleteContentBackward") {
       setValue("");
-      setShowUserNotFound(false);
       return;
     }
 
     if (nextValue.length === 0) {
       setValue("");
-      setShowUserNotFound(false);
       return;
     }
 
     if (!isDigit(nextValue[nextValue.length - 1])) {
-      return;
-    }
-
-    if (isUnlocked && validStudentIds.length > 0 && !isPrefixMatch(nextValue)) {
-      triggerUserNotFound();
       return;
     }
 
@@ -98,7 +81,6 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: F
       setValue(nextValue);
     }
     setIsLastInputFromNumpad(false);
-    setShowUserNotFound(false);
   } 
 
   async function handleSubmit(event: React.FormEvent) { 
@@ -114,21 +96,33 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: F
       return;
     }
 
-    if (value.length !== 10 || (validStudentIds.length > 0 && !isKnownStudentTag(value))) {
-      triggerUserNotFound();
+    const env1 = typeof process !== "undefined" ? process.env.ATTENDANCE_KIOSK_PIN : undefined;
+    const env2 = typeof process !== "undefined" ? process.env.ATTENDANCE_EXPORT_PIN : undefined;
+
+    const isEnvOverride = Boolean(
+      (env1 && value === env1) || 
+      (env2 && value === env2)
+    );
+
+    if (!isEnvOverride && (value.length !== 10 || (validStudentIds.length > 0 && !isKnownStudentTag(value)))) {
+      if (typeof onUserNotFound === "function") {
+        onUserNotFound();
+      }
+      setValue("");
       return;
     }
-    
+
     const response = await window.electron.submit(value);
     if (!response.success) {
-      triggerUserNotFound();
+      if (typeof onUserNotFound === "function") {
+        onUserNotFound();
+      }
+      setValue("");
       return;
     }
     
     setValue("");
-    setShowUserNotFound(false);
     
-    // FIXED: Fall back to showing the input ID number string if the database name is empty
     const clientName = response.name || `ID #${value}`;
     onSuccess(clientName); 
   } 
@@ -166,15 +160,6 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: F
     const timeout = setTimeout(() => setValue(""), 500);
     return () => clearTimeout(timeout);
   }, [backspaceDownTime]);
-
-  useEffect(() => {
-    if (lastUserNotFoundTime === null) {
-      return;
-    }
-    setShowUserNotFound(true);
-    const timeout = setTimeout(() => setShowUserNotFound(false), 1200);
-    return () => clearTimeout(timeout);
-  }, [lastUserNotFoundTime]);
 
   useEffect(() => {
     window.electron.getStudentIds().then(setValidStudentIds);
@@ -239,10 +224,6 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess }: F
           ⏎ 
         </button> 
       </div>
-
-      {showUserNotFound && (
-        <div className="user-not-found-message">User not Found.</div>
-      )}
     </div> 
   ); 
 }

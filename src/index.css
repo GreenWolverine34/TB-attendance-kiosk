@@ -242,6 +242,11 @@ body, input, button {
   box-sizing: border-box !important; 
   z-index: 9999 !important; 
 } 
+.footer.user-not-found { 
+  background-color: #ff1e1e !important; 
+  color: white !important; 
+  animation: flash-red 0.8s ease-in-out 1; 
+} 
 
 .prompt { 
   font-size: 1.25rem !important; 
