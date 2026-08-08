@@ -1,7 +1,7 @@
 TerrorBytes Attendance Kiosk
 ============================
 
-Attendance kiosk for robotics meetings. Designed for the Raspberry Pi 7" touchscreen (800x480 resolution). Built with
+Attendance kiosk for robotics meetings. Designed for the Raspberry Pi 7" touchscreen 2 (1280 x 720 resolution). Built with
 Electron and React.
 
 ![Screenshot of app](docs/images/screenshot.png)
@@ -10,7 +10,7 @@ Electron and React.
 
 The kiosk starts locked. Enter the attendance PIN on the touchscreen to enable NFC scanning. Enter the export PIN to
 open the report/export modal. Locking attendance with the attendance PIN also sends the configured report email if
-email delivery is enabled. By default the attendance PIN uses `ATTENDANCE_KIOSK_PIN` and falls back to `694694`;
+email delivery is enabled. By default the attendance PIN uses `ATTENDANCE_KIOSK_PIN` and falls back to `4561`;
 set `ATTENDANCE_EXPORT_PIN` for the export path.
 
 ## Importing Student Names
@@ -19,9 +19,9 @@ Students are stored in the database using their unique 10-digit ID number. Progr
 
 Student names can be imported using a .csv file. It should follow the provided format below, including the necessary header.
 
-    id_number,first_name,last_name
-    1234567890, def_firstname, def_lastname
-    4561456100, terrorbytes, people
+    id_number,first_name,last_name, slack_username(optional)
+    1234567890, def_firstname, def_lastname, lastfirst1093
+    4561456100, terrorbytes, people, tbytes
 
 ## Development
 
