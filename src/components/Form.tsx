@@ -123,12 +123,15 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess, onU
     const clientName = response.name || `ID #${value}`;
     onSuccess(clientName); 
   } 
+  function handleBlur(e: React.FocusEvent) { 
+  // Typecast the generic target as an HTMLInputElement
+  const target = e.target as HTMLInputElement;
 
-  function handleBlur(e: React.FocusEvent<HTMLInputElement>) { 
-    if (isActive) { 
-      e.target.focus(); 
-    } 
+  if (isActive && document.activeElement !== target) { 
+    target.focus(); 
   } 
+}
+
 
   function handleButtonActive(e: React.PointerEvent<HTMLButtonElement>) { 
     setActiveButton(e.currentTarget.value); 
