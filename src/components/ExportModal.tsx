@@ -107,7 +107,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
         adjustDate("end", 1);
       }
 
-      // Column and Action Navigation
+      // Column Navigation (Left / Right)
       if (e.key === "ArrowLeft" || e.key === "4" || e.code === "Numpad4") {
         e.preventDefault();
         setActiveColumn("actions");
@@ -117,7 +117,8 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
         setActiveColumn("reports");
       }
 
-      if (e.key === "ArrowUp" || e.key === "8" || e.code === "Numpad8") {
+      // UP NAVIGATION: ArrowUp OR '2' / Numpad2
+      if (e.key === "ArrowUp" || e.key === "2" || e.code === "Numpad2") {
         e.preventDefault();
         if (activeColumn === "reports") {
           setSelectedReportType((curr) => (curr === "checkin" ? "meeting" : curr === "meeting" ? "attendance" : curr));
@@ -126,7 +127,8 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
         }
       }
 
-      if (e.key === "ArrowDown" || e.key === "2" || e.code === "Numpad2") {
+      // DOWN NAVIGATION: ArrowDown OR '8' / Numpad8
+      if (e.key === "ArrowDown" || e.key === "8" || e.code === "Numpad8") {
         e.preventDefault();
         if (activeColumn === "reports") {
           setSelectedReportType((curr) => (curr === "attendance" ? "meeting" : curr === "meeting" ? "checkin" : curr));
@@ -160,7 +162,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
 
       <div className="modal-row" style={{ background: "#f5f5f5", padding: "0.5rem", borderRadius: "8px", fontSize: "0.85rem", color: "#444" }}>
         <strong>Numpad Nav Controls:</strong>
-        <span style={{ margin: "0 0.4rem" }}>↕ [8 / 2] Move</span> |
+        <span style={{ margin: "0 0.4rem" }}>↕ [2 Up / 8 Down]</span> |
         <span style={{ margin: "0 0.4rem" }}>↔ [4 / 6] Swap Column</span> |
         <span style={{ margin: "0 0.4rem" }}>📅 Start [7 / 9]</span> |
         <span style={{ margin: "0 0.4rem" }}>📅 End [1 / 3]</span> |
