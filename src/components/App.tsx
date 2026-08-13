@@ -18,20 +18,20 @@ const PROMPT_EXPORT = "Export reports";
 const PROMPT_USER_NOT_FOUND = "User not Found.";
 
 export default function App() {
-  const [isUnlocked, setIsUnlocked] = useState(false);
-  const [lastPromptTime, setLastPromptTime] = useState(null);
-  const [promptText, setPromptText] = useState(PROMPT_LOCKED);
-  const [hasFocus, setHasFocus] = useState(() => typeof document !== "undefined" && document.hasFocus());
-  const [showRoster, setShowRoster] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
+  const [lastPromptTime, setLastPromptTime] = useState<Date | null>(null);
+  const [promptText, setPromptText] = useState<string>(PROMPT_LOCKED);
+  const [hasFocus, setHasFocus] = useState<boolean>(() => typeof document !== "undefined" && document.hasFocus());
+  const [showRoster, setShowRoster] = useState<boolean>(false);
   const [attendance, setAttendance] = useState<CurrentAttendanceEntry[]>([]);
-  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState<boolean>(false);
   const [enabledActions, setEnabledActions] = useState<EnabledActions>({
     sendToSlack: false,
     sendReportEmail: false,
     sendToGoogleSheet: false,
   });
 
-  function handleSubmit(name: string) {
+  function handleSubmit(name?: string) {
     setPromptText(name ? `${name} clocked in` : PROMPT_SUCCESS);
     setLastPromptTime(new Date());
   }
@@ -84,20 +84,30 @@ export default function App() {
   }
 
   useEffect(() => {
+    if (window.electron.onLockConsole) {
+      window.electron.onLockConsole(() => {
+        setIsUnlocked(false);
+        setShowRoster(false);
+        setPromptText("Attendance closed via Slack");
+        setLastPromptTime(new Date());
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     if (lastPromptTime === null) {
       return;
     }
     let timeout: ReturnType<typeof setTimeout> | undefined;
     if (promptText.endsWith("clocked in") || promptText === PROMPT_SUCCESS) {
       timeout = setTimeout(() => setPromptText(PROMPT_SCAN), 2000);
-    } else if (promptText.startsWith(PROMPT_CLOSED)) {
+    } else if (promptText.startsWith(PROMPT_CLOSED) || promptText === "Attendance closed via Slack") {
       timeout = setTimeout(() => setPromptText(PROMPT_LOCKED), 2000);
     } else if (promptText === PROMPT_CLOSE_ERROR) {
       timeout = setTimeout(() => setPromptText(PROMPT_LOCKED), 10000);
     } else if (promptText === PROMPT_WRONG_PIN) {
       timeout = setTimeout(() => setPromptText(PROMPT_LOCKED), 10000);
     } else if (promptText === PROMPT_USER_NOT_FOUND) {
-      // Show the user-not-found message briefly then revert to scan prompt
       timeout = setTimeout(() => setPromptText(PROMPT_SCAN), 1200);
     }
     return () => {
@@ -114,7 +124,7 @@ export default function App() {
       try {
         window.focus();
       } catch {
-        // focus may fail in some environments; still set state so the modal closes.
+        // focus may fail in non-standard environments
       }
       setHasFocus(true);
     };
@@ -158,7 +168,7 @@ export default function App() {
   }
 
   let footerClass = "footer";
-  if (promptText.endsWith("clocked in") || promptText === PROMPT_SUCCESS || promptText.startsWith(PROMPT_CLOSED)) {
+  if (promptText.endsWith("clocked in") || promptText === PROMPT_SUCCESS || promptText.startsWith(PROMPT_CLOSED) || promptText === "Attendance closed via Slack") {
     footerClass += " ok";
   } else if (promptText === PROMPT_WRONG_PIN || promptText === PROMPT_CLOSE_ERROR) {
     footerClass += " error";
@@ -179,7 +189,7 @@ export default function App() {
         </div>
       </Modal>
 
-      {/* HEADER SECTION WITH FLOATING TOP-RIGHT CREDIT TEXT */}
+      {/* HEADER SECTION */}
       <div className="header-container">
         <h1 className="title">TerrorBytes Attendance</h1>
         <p className="source-credit">Modified from 694 Attendance System</p>

@@ -19,6 +19,7 @@ declare global {
             importStudents: () => void;
             sendReportEmail: (reportType?: "attendance" | "meeting" | "checkin" | "all") => void;
             syncToGoogleSheet: () => void;
+            onLockConsole: (callback: () => void) => void;
         }
     }
 }
@@ -40,4 +41,7 @@ contextBridge.exposeInMainWorld("electron", {
     importStudents: () => ipcRenderer.send("importStudents"),
     sendReportEmail: (reportType?: "attendance" | "meeting" | "checkin" | "all") => ipcRenderer.send("sendReportEmail", reportType),
     syncToGoogleSheet: () => ipcRenderer.send("syncToGoogleSheet"),
+    onLockConsole: (callback: () => void) => {
+        ipcRenderer.on("lock-console", () => callback());
+    },
 });

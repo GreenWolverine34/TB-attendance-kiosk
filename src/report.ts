@@ -2,10 +2,10 @@ import { Database } from "sqlite";
 import { CurrentAttendanceEntry, TodaysStats } from "./types";
 
 // Time between the first and last tap of a day to consider a student to have checked out
-export const MIN_CHECKOUT_TIME_S = 1800;
+export const MIN_CHECKOUT_TIME_S = 10 * 60; // 10 minutes
 
 // Meeting threshold to use for automated reports
-export const MEETING_THRESHOLD = 20;
+export const MEETING_THRESHOLD = 0;
 
 export async function generateAttendanceReport(db: Database, startDate: string, endDate: string, meetingThreshold: number) {
     const [
@@ -117,9 +117,6 @@ export async function generateMeetingReport(db: Database, startDate: string, end
 }
 
 export async function generateCheckinData(db: Database, startDate: string, endDate: string, meetingThreshold: number) {
-    // Produce one row per check-in/check-out pair. For each student and meeting date, order their
-    // timestamps and pair consecutive taps (1->2, 3->4, ...). If a pair has no checkout, checkoutTime
-    // will be NULL and totalHours will be 0.
     const checkinsResult = await db.all(`
         WITH meeting_dates AS (
             SELECT date(timestamp) AS date
@@ -160,7 +157,6 @@ export async function generateCheckinData(db: Database, startDate: string, endDa
         ":meetingThreshold": meetingThreshold,
     });
 
-    // User-requested minimal columns for spreadsheet sync: first name, last name, date, hours for each pair
     const header = "first_name,last_name,date,hours\n";
     return header + checkinsResult.map((row) =>
         `${row.firstName},${row.lastName},${row.date},${row.totalHours.toFixed(2)}\n`
@@ -216,6 +212,7 @@ export async function getCurrentAttendance(db: Database, date: string): Promise<
         LEFT JOIN student ON checkin.idNumber = student.idNumber
         WHERE date(timestamp) = :date
         GROUP BY checkin.idNumber
+        HAVING (count(*) % 2) = 1
         ORDER BY min(timestamp) ASC
     `, {
         ":date": date,

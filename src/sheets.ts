@@ -29,7 +29,6 @@ async function getSheetsClient() {
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 
-  // FIX 2: Pass 'auth' directly to avoid TypeScript 'auth.getClient()' type conflicts
   const sheets = google.sheets({ version: "v4", auth }); 
 
   return { sheets, sheetId };
@@ -91,23 +90,28 @@ export async function uploadReportsToSheet(checkinInput: string | string[][]) {
 
   let values: any[][] = [];
 
-  // Handle input whether generateCheckinData returns a CSV string OR a 2D Array
   if (typeof checkinInput === "string") {
     if (checkinInput.trim().length === 0) return;
     values = csvToValues(checkinInput, true);
   } else if (Array.isArray(checkinInput)) {
     if (checkinInput.length === 0) return;
-    // Strip header row if present in 2D array
     const hasHeader = checkinInput[0] && String(checkinInput[0][0]).toLowerCase().includes("first");
     values = hasHeader ? checkinInput.slice(1) : checkinInput;
   }
 
-
-  await sheets.spreadsheets.values.append({
+  // Clear existing rawData rows to avoid duplicate accumulation across syncs
+  await sheets.spreadsheets.values.clear({
     spreadsheetId: sheetId,
-    range: `rawData!A1`,
-    valueInputOption: "USER_ENTERED",
-    insertDataOption: "INSERT_ROWS",
-    requestBody: { values },
+    range: "rawData!A2:Z",
   });
+
+  // Write new data starting at row 2
+  if (values.length > 0) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: "rawData!A2",
+      valueInputOption: "USER_ENTERED",
+      requestBody: { values },
+    });
+  }
 }

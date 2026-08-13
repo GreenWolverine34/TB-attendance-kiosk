@@ -138,6 +138,11 @@ if (slackBotToken && slackAppToken) {
           );
         }
 
+        // Notify front-end kiosk UI to lock console
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("lock-console");
+        }
+
         const messageText =
           `📋 *Meeting Attendance Summary Report*\n` +
           `*Attendance Status:* Closed\n` +
@@ -437,6 +442,28 @@ app.on("ready", async () => {
   });
 
   createWindow();
+});
+
+// Auto clock-out active users when closing the console app
+app.on("before-quit", async () => {
+  if (dbInstance) {
+    try {
+      const today = getToday();
+      const currentAttendance = await getCurrentAttendance(dbInstance, today);
+      if (currentAttendance.length > 0) {
+        const nowISO = toISOString(new Date());
+        for (const attendee of currentAttendance) {
+          await dbInstance.run(
+            "INSERT INTO checkin (timestamp, idNumber) VALUES (?, ?)",
+            nowISO,
+            attendee.idNumber
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Error clocking out users on exit:", err);
+    }
+  }
 });
 
 app.on("window-all-closed", () => {
