@@ -1,5 +1,5 @@
-id_number,first_name,last_name
-1234567890, random, name
-0987654321, another, student
-1111111111, test, user
-00000000000, does this work?, yes
+id_number,first_name,last_name,slack_id 
+1234567890, test, ping, @blank
+0987654321, another, student, @blank
+1111111111, test, user, @blank
+00000000000, does this work?, yes, @blank
