@@ -37,6 +37,26 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
     });
   }
 
+  // DST-SAFE DATE ADJUSTMENT FUNCTION
+  function adjustDate(field: "start" | "end", days: number) {
+    const targetDateStr = field === "start" ? startDate : endDate;
+    const current = new Date(`${targetDateStr}T12:00:00`);
+    if (isNaN(current.getTime())) return;
+
+    current.setDate(current.getDate() + days);
+
+    const year = current.getFullYear();
+    const month = String(current.getMonth() + 1).padStart(2, "0");
+    const day = String(current.getDate()).padStart(2, "0");
+    const newStr = `${year}-${month}-${day}`;
+
+    if (field === "start") {
+      setStartDate(newStr);
+    } else {
+      setEndDate(newStr);
+    }
+  }
+
   function executeActionIndex(index: number) {
     if (index === 0) {
       if (selectedReportType === "attendance") {
@@ -69,6 +89,25 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Date Controls via Numpad
+      if (e.key === "7" || e.code === "Numpad7") {
+        e.preventDefault();
+        adjustDate("start", -1);
+      }
+      if (e.key === "9" || e.code === "Numpad9") {
+        e.preventDefault();
+        adjustDate("start", 1);
+      }
+      if (e.key === "1" || e.code === "Numpad1") {
+        e.preventDefault();
+        adjustDate("end", -1);
+      }
+      if (e.key === "3" || e.code === "Numpad3") {
+        e.preventDefault();
+        adjustDate("end", 1);
+      }
+
+      // Column and Action Navigation
       if (e.key === "ArrowLeft" || e.key === "4" || e.code === "Numpad4") {
         e.preventDefault();
         setActiveColumn("actions");
@@ -119,17 +158,19 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
         <span className="today-stats">Checkout rate: {checkoutRatePercent.toFixed(2)}%</span>
       </div>
 
-      <div className="modal-row" style={{ background: "#f5f5f5", padding: "0.5rem", borderRadius: "8px", fontSize: "0.9rem", color: "#444" }}>
+      <div className="modal-row" style={{ background: "#f5f5f5", padding: "0.5rem", borderRadius: "8px", fontSize: "0.85rem", color: "#444" }}>
         <strong>Numpad Nav Controls:</strong>
-        <span style={{ margin: "0 0.5rem" }}>↕ [8 / 2] Move</span> |
-        <span style={{ margin: "0 0.5rem" }}>↔ [4 / 6] Swap Column</span> |
-        <span style={{ margin: "0 0.5rem" }}>⏎ [Enter] Select Action</span>
+        <span style={{ margin: "0 0.4rem" }}>↕ [8 / 2] Move</span> |
+        <span style={{ margin: "0 0.4rem" }}>↔ [4 / 6] Swap Column</span> |
+        <span style={{ margin: "0 0.4rem" }}>📅 Start [7 / 9]</span> |
+        <span style={{ margin: "0 0.4rem" }}>📅 End [1 / 3]</span> |
+        <span style={{ margin: "0 0.4rem" }}>⏎ [Enter] Select Action</span>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="modal-row">
           <div><label>Date Range</label></div>
-          <div className="date-range">
+          <div className="date-range" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <input className="date-input" name="start-date" type="date" value={startDate} required onChange={(e) => setStartDate(e.target.value)} />
             {" – "}
             <input className="date-input" name="end-date" type="date" value={endDate} required onChange={(e) => setEndDate(e.target.value)} />

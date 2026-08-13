@@ -79,7 +79,6 @@ if (slackBotToken && slackAppToken) {
     socketMode: true,
   });
 
-  // Handle /attendance command with parameter routing
   slackBot.command("/attendance", async ({ ack, respond, command }) => {
     await ack();
 
@@ -87,7 +86,6 @@ if (slackBotToken && slackAppToken) {
       const db = await initDB();
       const param = (command.text || "").trim().toLowerCase();
 
-      // Parameter: "help"
       if (param === "help") {
         await respond({
           response_type: "ephemeral",
@@ -128,7 +126,6 @@ if (slackBotToken && slackAppToken) {
         return `• *${fullName}*${slackHandle} — ${timeSpent} (Checked in at ${checkInTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})`;
       });
 
-      // Parameter: "report", "summary", or "close" -> Close session & output final report
       if (param === "report" || param === "summary" || param === "close") {
         for (const attendee of currentAttendance) {
           await db.run(
@@ -138,7 +135,6 @@ if (slackBotToken && slackAppToken) {
           );
         }
 
-        // Notify front-end kiosk UI to lock console
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send("lock-console");
         }
@@ -154,7 +150,6 @@ if (slackBotToken && slackAppToken) {
           text: messageText,
         });
       } else {
-        // Default / "status" Parameter: Live status check (session stays open)
         const messageText =
           `🟢 *Active Attendance Status*\n` +
           `*Currently Checked In:* ${currentAttendance.length}\n\n` +
@@ -197,7 +192,6 @@ function createWindow(): void {
 app.on("ready", async () => {
   const db = await initDB();
 
-  // IPC Handlers matched with preload.ts
   ipcMain.handle("submit", async (_, idNumber: string) => {
     const student = await db.get("SELECT * FROM student WHERE idNumber = ?", idNumber);
     if (!student) {
@@ -276,7 +270,6 @@ app.on("ready", async () => {
     return rows.map((r) => r.idNumber);
   });
 
-  // Report Export Listeners
   ipcMain.on("exportAttendanceReport", async (_, startDate: string, endDate: string, meetingThreshold: number) => {
     try {
       if (!mainWindow) return;
@@ -369,6 +362,8 @@ app.on("ready", async () => {
         let numSuccess = 0;
         let numFailure = 0;
 
+        const importedIds = new Set<string>();
+
         await db.run("BEGIN TRANSACTION");
         try {
           for (const record of records) {
@@ -382,6 +377,8 @@ app.on("ready", async () => {
               continue;
             }
 
+            importedIds.add(idNumber);
+
             await db.run(
               "INSERT OR REPLACE INTO student (idNumber, firstName, lastName, slackId) VALUES (?, ?, ?, ?)",
               idNumber,
@@ -391,13 +388,20 @@ app.on("ready", async () => {
             );
             numSuccess++;
           }
+
+          // Delete students not in imported CSV list
+          if (importedIds.size > 0) {
+            const placeholders = Array.from(importedIds).map(() => "?").join(",");
+            await db.run(`DELETE FROM student WHERE idNumber NOT IN (${placeholders})`, ...Array.from(importedIds));
+          }
+
           await db.run("COMMIT");
         } catch (txnErr) {
           await db.run("ROLLBACK");
           throw txnErr;
         }
 
-        let message = `${numSuccess} student record${numSuccess !== 1 ? "s" : ""} imported successfully.`;
+        let message = `${numSuccess} student record${numSuccess !== 1 ? "s" : ""} imported. Outdated records removed.`;
         if (numFailure > 0) message += ` (${numFailure} failed validation)`;
 
         if (mainWindow) {
@@ -428,12 +432,13 @@ app.on("ready", async () => {
 
   ipcMain.on("syncToGoogleSheet", async () => {
     try {
-      const checkinData = await generateCheckinData(db, getStartDate(), getToday(), MEETING_THRESHOLD);
+      // Sync only today's data to prevent historical baseline overrides
+      const checkinData = await generateCheckinData(db, getToday(), getToday(), MEETING_THRESHOLD);
       await uploadReportsToSheet(checkinData);
       if (mainWindow) {
         await dialog.showMessageBox(mainWindow, {
           title: "Sync Complete",
-          message: "Google Sheets updated successfully.",
+          message: "Google Sheets updated with today's attendance.",
         });
       }
     } catch (err) {
@@ -444,7 +449,6 @@ app.on("ready", async () => {
   createWindow();
 });
 
-// Auto clock-out active users when closing the console app
 app.on("before-quit", async () => {
   if (dbInstance) {
     try {
