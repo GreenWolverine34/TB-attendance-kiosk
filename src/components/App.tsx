@@ -21,7 +21,6 @@ export default function App() {
   const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
   const [lastPromptTime, setLastPromptTime] = useState<Date | null>(null);
   const [promptText, setPromptText] = useState<string>(PROMPT_LOCKED);
-  const [hasFocus, setHasFocus] = useState<boolean>(() => typeof document !== "undefined" && document.hasFocus());
   const [showRoster, setShowRoster] = useState<boolean>(false);
   const [attendance, setAttendance] = useState<CurrentAttendanceEntry[]>([]);
   const [exportModalOpen, setExportModalOpen] = useState<boolean>(false);
@@ -118,41 +117,6 @@ export default function App() {
   }, [lastPromptTime, promptText]);
 
   useEffect(() => {
-    const handleFocus = () => setHasFocus(true);
-    const handleBlur = () => setHasFocus(false);
-    const activateFocus = () => {
-      try {
-        window.focus();
-      } catch {
-        // focus may fail in non-standard environments
-      }
-      setHasFocus(true);
-    };
-
-    window.addEventListener("focus", handleFocus);
-    window.addEventListener("blur", handleBlur);
-    window.addEventListener("pointerdown", activateFocus);
-    window.addEventListener("mousedown", activateFocus);
-    window.addEventListener("touchstart", activateFocus);
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        setHasFocus(document.hasFocus());
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.electron.getEnabledActions().then(setEnabledActions);
-
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-      window.removeEventListener("blur", handleBlur);
-      window.removeEventListener("pointerdown", activateFocus);
-      window.removeEventListener("mousedown", activateFocus);
-      window.removeEventListener("touchstart", activateFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
-
-  useEffect(() => {
     if (!isUnlocked || !showRoster) {
       return;
     }
@@ -178,16 +142,6 @@ export default function App() {
 
   return (
     <>
-      <Modal
-        className="modal focus-modal"
-        isOpen={!hasFocus}
-        shouldCloseOnOverlayClick={true}
-        shouldCloseOnEsc={true}
-        onRequestClose={() => setHasFocus(true)}>
-        <div className="focus-modal-content" onClick={() => setHasFocus(true)} onPointerDown={() => setHasFocus(true)}>
-          <h1>Please tap the screen to continue</h1>
-        </div>
-      </Modal>
 
       {/* HEADER SECTION */}
       <div className="header-container">

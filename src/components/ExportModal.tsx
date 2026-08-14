@@ -143,7 +143,8 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
         else executeActionIndex(selectedActionIndex);
       }
 
-      if (e.key === "Escape") onClose();
+      // Close Modal: Escape OR '5' / Numpad5
+      if (e.key === "Escape" || e.key === "5" || e.code === "Numpad5") onClose();
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -166,7 +167,8 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
         <span style={{ margin: "0 0.4rem" }}>↔ [4 / 6] Swap Column</span> |
         <span style={{ margin: "0 0.4rem" }}>📅 Start [7 / 9]</span> |
         <span style={{ margin: "0 0.4rem" }}>📅 End [1 / 3]</span> |
-        <span style={{ margin: "0 0.4rem" }}>⏎ [Enter] Select Action</span>
+        <span style={{ margin: "0 0.4rem" }}>⏎ [Enter] Select Action</span> |
+        <span style={{ margin: "0 0.4rem" }}>✖ [5] Close</span>
       </div>
 
       <form onSubmit={handleSubmit}>
