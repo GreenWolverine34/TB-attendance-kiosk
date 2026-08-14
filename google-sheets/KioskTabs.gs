@@ -1,7 +1,6 @@
 /**
  * TerrorBytes Kiosk - Spreadsheet Tab Automation (KioskTabs.gs)
- *
- * Configures 'rawData' for kiosk exports and 'Output' for live attendance summaries.
+ * Matches top-aligned date boundaries and robust error checking routines.
  */
 
 function onOpen() {
@@ -13,7 +12,7 @@ function onOpen() {
 }
 
 /**
- * Initializes 'rawData' and 'Output' tabs with headers, date controls, and dynamic formulas.
+ * Initializes 'rawData' and 'Output' tabs with headers, top-aligned date controls, and structural formulas.
  */
 function setupKioskTabs() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -34,61 +33,54 @@ function setupKioskTabs() {
   var outputSheet = getOrCreateSheet_(ss, "Output");
   outputSheet.clear();
 
-  // --- SECTION 1: Overall Hours Table ---
-  outputSheet.getRange("A1:B1").setValues([["Name", "Hours"]]);
-  outputSheet.getRange("A1:B1").setFontWeight("bold").setBackground("#247c28").setFontColor("#ffffff");
-
-  var overallFormula = 
-    '=IFERROR(QUERY(ARRAYFORMULA(IF(rawData!A2:A="",, {rawData!A2:A & " " & rawData!B2:B, VALUE(rawData!D2:D)})), ' +
-    '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data Recorded", 0})';
-  outputSheet.getRange("A2").setFormula(overallFormula);
-
-  // --- SECTION 2: Build Season Hours Table ---
-  outputSheet.getRange("A5:B5").setValues([["Build Season - Name", "Hours"]]);
-  outputSheet.getRange("A5:B5").setFontWeight("bold").setBackground("#247c28").setFontColor("#ffffff");
-
-  var buildSeasonFormula = 
-    '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + (DATEVALUE(rawData!C2:C) < DATEVALUE(B16)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(B17)),, ' +
-    '{rawData!A2:A & " " & rawData!B2:B, VALUE(rawData!D2:D)})), ' +
-    '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data for Build Season", 0})';
-  outputSheet.getRange("A6").setFormula(buildSeasonFormula);
-
-  // --- SECTION 3: Offseason Hours Table ---
-  outputSheet.getRange("A10:B10").setValues([["Offseason - Name", "Hours"]]);
-  outputSheet.getRange("A10:B10").setFontWeight("bold").setBackground("#247c28").setFontColor("#ffffff");
-
-  var offseasonFormula = 
-    '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + (DATEVALUE(rawData!C2:C) < DATEVALUE(B20)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(B21)),, ' +
-    '{rawData!A2:A & " " & rawData!B2:B, VALUE(rawData!D2:D)})), ' +
-    '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data for Offseason", 0})';
-  outputSheet.getRange("A11").setFormula(offseasonFormula);
-
-  // --- DATE CONTROL PARAMETERS BLOCK ---
+  // --- TOP DATE PARAMETERS BLOCK (Rows 1 to 3) ---
+  outputSheet.getRange("A1:B1").setValues([["Offseason", ""]]).setFontWeight("bold");
+  outputSheet.getRange("D1:E1").setValues([["Build Season", ""]]).setFontWeight("bold");
+  
   var dateSettings = [
-    ["Build Season", ""],
-    ["Start Date:", "2027-01-09"],
-    ["End Date:", "2027-05-01"],
-    ["", ""],
-    ["Offseason", ""],
-    ["Start Date:", "2026-08-18"],
-    ["End Date:", "2027-01-08"]
+    ["Start Date:", "2026-08-18", "", "Start Date:", "2027-01-09"],
+    ["End Date:", "2027-01-08", "", "End Date:", "2027-05-01"]
   ];
+  outputSheet.getRange("A2:E3").setValues(dateSettings);
 
-  outputSheet.getRange("A15:B21").setValues(dateSettings);
-  outputSheet.getRange("A15").setFontWeight("bold").setBackground("#e2f0d9");
-  outputSheet.getRange("A19").setFontWeight("bold").setBackground("#e2f0d9");
+  // Format Date Inputs explicitly
+  outputSheet.getRange("B2:B3").setNumberFormat("yyyy-mm-dd");
+  outputSheet.getRange("E2:E3").setNumberFormat("yyyy-mm-dd");
 
-  // Format Date Inputs
-  outputSheet.getRange("B16").setNumberFormat("yyyy-mm-dd");
-  outputSheet.getRange("B17").setNumberFormat("yyyy-mm-dd");
-  outputSheet.getRange("B20").setNumberFormat("yyyy-mm-dd");
-  outputSheet.getRange("B21").setNumberFormat("yyyy-mm-dd");
+  // --- SECTION HEADERS (Row 5) ---
+  outputSheet.getRange("A5:B5").setValues([["Name", "Hours"]]).setFontWeight("bold").setBackground("#247c28").setFontColor("#ffffff");
+  outputSheet.getRange("D5:E5").setValues([["Name", "Hours"]]).setFontWeight("bold").setBackground("#247c28").setFontColor("#ffffff");
+  outputSheet.getRange("G5:H5").setValues([["Name", "Hours"]]).setFontWeight("bold").setBackground("#247c28").setFontColor("#ffffff");
+  
+  outputSheet.getRange("G4:H4").setValues([["Total Hours", ""]]).setFontWeight("bold");
 
-  // Formatting Column Widths
+  // --- DYNAMIC ROBUST CORE FORMULAS ---
+  
+  // Column A & B: Offseason Hours Table (Filters by top dates B2 and B3)
+  var offseasonFormula = 
+    '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + (DATEVALUE(rawData!C2:C) < DATEVALUE(B2)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(B3)),, ' +
+    '{rawData!A2:A & " " & rawData!B2:B, rawData!D2:D})), ' +
+    '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data", 0})';
+  outputSheet.getRange("A6").setFormula(offseasonFormula);
+
+  // Column D & E: Build Season Hours Table (Filters by top dates E2 and E3)
+  var buildSeasonFormula = 
+    '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + (DATEVALUE(rawData!C2:C) < DATEVALUE(E2)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(E3)),, ' +
+    '{rawData!A2:A & " " & rawData!B2:B, rawData!D2:D})), ' +
+    '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data", 0})';
+  outputSheet.getRange("D6").setFormula(buildSeasonFormula);
+
+  // Column G & H: Overall Total Lifetime Hours Cumulative Table
+  var overallFormula = 
+    '=IFERROR(QUERY(ARRAYFORMULA(IF(rawData!A2:A="",, {rawData!A2:A & " " & rawData!B2:B, rawData!D2:D})), ' +
+    '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data", 0})';
+  outputSheet.getRange("G6").setFormula(overallFormula);
+
+  // Sizing adjust routines
   rawDataSheet.autoResizeColumns(1, 4);
-  outputSheet.autoResizeColumns(1, 2);
+  outputSheet.autoResizeColumns(1, 8);
 
-  ss.toast("Kiosk tabs initialized successfully!", "TerrorBytes Kiosk", 5);
+  ss.toast("Spreadsheet setup completed successfully!", "TerrorBytes Kiosk", 5);
 }
 
 /**

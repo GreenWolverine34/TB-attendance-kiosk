@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 set -o errexit
 
 if [ ! -f /.dockerenv ]; then
@@ -6,17 +6,18 @@ if [ ! -f /.dockerenv ]; then
     exit 1
 fi
 
-rm -rf /code/out
-cp -a /code/. .
-rm -rf node_modules .webpack
+# Clean previous build targets
+rm -rf /code/out node_modules .webpack
 
+# Embed tracking headers directly into configuration
 sed -i "s/DEV_COMMIT/$(git rev-parse --short HEAD)/" package.json
 sed -i "s/DEV_BUILD_TIME/$(date)/" package.json
 
+# Inject platform libraries needed by forge for building packages
 apt-get update
-apt-get install dpkg fakeroot
+apt-get install -y dpkg fakeroot
 
+# Execute compilation pipeline
 npm install
 npm run make:pi
-
-mv /code2/out /code
+s

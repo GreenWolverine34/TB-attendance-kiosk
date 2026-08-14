@@ -11,7 +11,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "make:pi": "electron-forge make --platform linux --arch arm64",
-    "build": "docker run -v .:/code -w /code2 -it node:22 /code/scripts/build.sh",
+    "build": "docker run --rm -v \"$(pwd)\":/code -w /code -it node:22 /code/scripts/build.sh",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx ."
   },
@@ -42,7 +42,7 @@
     "style-loader": "^3.3.4",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
-    "typescript": "~4.5.4"
+    "typescript": "^5.4.5"
   },
   "keywords": [],
   "author": {

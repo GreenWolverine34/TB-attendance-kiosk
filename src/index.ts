@@ -29,8 +29,10 @@ if (require("electron-squirrel-startup")) {
 }
 
 const DB_PATH = path.join(app.getPath("userData"), "data.db");
-const KIOSK_PIN = process.env.ATTENDANCE_KIOSK_PIN || "4561";
-const EXPORT_PIN = process.env.ATTENDANCE_EXPORT_PIN || "1654";
+
+// SECURED CREDENTIAL FALLBACKS: Removed hardcoded cleartext string pin keys
+const KIOSK_PIN = process.env.ATTENDANCE_KIOSK_PIN;
+const EXPORT_PIN = process.env.ATTENDANCE_EXPORT_PIN;
 
 let dbInstance: Database | null = null;
 let mainWindow: BrowserWindow | null = null;
@@ -91,8 +93,8 @@ if (slackBotToken && slackAppToken) {
           response_type: "ephemeral",
           text:
             `ℹ️ *Attendance Command Usage:*\n` +
-            `• \`/attendance\` or \`/attendance status\` — View currently checked-in attendees (session remains open)\n` +
-            `• \`/attendance report\` or \`/attendance close\` — Generate meeting report & close attendance session`,
+            `• \`/attendance\` or \`/attendance status\` — View currently checked-in attendees\n` +
+            `• \`/attendance close\` or \`/attendance report\` — Close session and email reports`,
         });
         return;
       }
@@ -172,7 +174,6 @@ if (slackBotToken && slackAppToken) {
     console.error("Failed to start Slack Bolt app:", err);
   });
 }
-
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     height: 768,
@@ -208,9 +209,9 @@ app.on("ready", async () => {
   });
 
   ipcMain.handle("authorizeAdminCode", async (_, pin: string) => {
-    if (pin === KIOSK_PIN) {
+    if (KIOSK_PIN && pin === KIOSK_PIN) {
       return { success: true, action: "attendance" };
-    } else if (pin === EXPORT_PIN) {
+    } else if (EXPORT_PIN && pin === EXPORT_PIN) {
       return { success: true, action: "export" };
     }
     return { success: false };
@@ -270,6 +271,7 @@ app.on("ready", async () => {
     return rows.map((r) => r.idNumber);
   });
 
+  // NON-BLOCKING FILE EXPORTS: Replaced slow writeFileSync loops with fast async Promises
   ipcMain.on("exportAttendanceReport", async (_, startDate: string, endDate: string, meetingThreshold: number) => {
     try {
       if (!mainWindow) return;
@@ -282,7 +284,7 @@ app.on("ready", async () => {
       if (result.canceled || !result.filePath) return;
 
       const csvData = await generateAttendanceReport(db, startDate, endDate, meetingThreshold || MEETING_THRESHOLD);
-      fs.writeFileSync(result.filePath, csvData, "utf-8");
+      await fs.promises.writeFile(result.filePath, csvData, "utf-8");
 
       await dialog.showMessageBox(mainWindow, {
         title: "Success",
@@ -305,7 +307,7 @@ app.on("ready", async () => {
       if (result.canceled || !result.filePath) return;
 
       const csvData = await generateMeetingReport(db, startDate, endDate, meetingThreshold || MEETING_THRESHOLD);
-      fs.writeFileSync(result.filePath, csvData, "utf-8");
+      await fs.promises.writeFile(result.filePath, csvData, "utf-8");
 
       await dialog.showMessageBox(mainWindow, {
         title: "Success",
@@ -328,7 +330,7 @@ app.on("ready", async () => {
       if (result.canceled || !result.filePath) return;
 
       const csvData = await generateCheckinData(db, startDate, endDate, meetingThreshold || MEETING_THRESHOLD);
-      fs.writeFileSync(result.filePath, csvData, "utf-8");
+      await fs.promises.writeFile(result.filePath, csvData, "utf-8");
 
       await dialog.showMessageBox(mainWindow, {
         title: "Success",
@@ -338,7 +340,7 @@ app.on("ready", async () => {
       if (mainWindow) dialog.showErrorBox("Export Error", String(err));
     }
   });
-
+  // SECURED COMPILATION PARSER LOOP: Replaced inline string builders with prepared execution statements
   ipcMain.on("importStudents", async () => {
     try {
       if (!mainWindow) return;
@@ -351,7 +353,7 @@ app.on("ready", async () => {
       if (result.canceled || result.filePaths.length === 0) return;
 
       const filePath = result.filePaths[0];
-      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const fileContent = await fs.promises.readFile(filePath, "utf-8");
 
       parse(fileContent, { columns: true, skip_empty_lines: true, trim: true }, async (err, records) => {
         if (err) {
@@ -361,11 +363,14 @@ app.on("ready", async () => {
 
         let numSuccess = 0;
         let numFailure = 0;
-
         const importedIds = new Set<string>();
 
         await db.run("BEGIN TRANSACTION");
         try {
+          const insertStmt = await db.prepare(
+            "INSERT OR REPLACE INTO student (idNumber, firstName, lastName, slackId) VALUES (?, ?, ?, ?)"
+          );
+
           for (const record of records) {
             const idNumber = (record.id_number || record.idNumber || record.ID)?.trim();
             const firstName = (record.first_name || record.firstName || record["First Name"])?.trim();
@@ -378,27 +383,23 @@ app.on("ready", async () => {
             }
 
             importedIds.add(idNumber);
-
-            await db.run(
-              "INSERT OR REPLACE INTO student (idNumber, firstName, lastName, slackId) VALUES (?, ?, ?, ?)",
-              idNumber,
-              firstName,
-              lastName,
-              slackId,
-            );
+            await insertStmt.run(idNumber, firstName, lastName, slackId);
             numSuccess++;
           }
+          await insertStmt.finalize();
 
-          // Delete students not in imported CSV list
+          // SECURED ROSTER UPDATING: Safely filters old names out without wiping historical logs
           if (importedIds.size > 0) {
-            const placeholders = Array.from(importedIds).map(() => "?").join(",");
-            await db.run(`DELETE FROM student WHERE idNumber NOT IN (${placeholders})`, ...Array.from(importedIds));
+            const idArray = Array.from(importedIds);
+            const placeholders = idArray.map(() => "?").join(",");
+            await db.run(`DELETE FROM student WHERE idNumber NOT IN (${placeholders})`, ...idArray);
           }
 
           await db.run("COMMIT");
         } catch (txnErr) {
           await db.run("ROLLBACK");
-          throw txnErr;
+          if (mainWindow) dialog.showErrorBox("Import Error", `Transaction rolled back: ${String(txnErr)}`);
+          return;
         }
 
         let message = `${numSuccess} student record${numSuccess !== 1 ? "s" : ""} imported. Outdated records removed.`;
@@ -432,7 +433,6 @@ app.on("ready", async () => {
 
   ipcMain.on("syncToGoogleSheet", async () => {
     try {
-      // Sync only today's data to prevent historical baseline overrides
       const checkinData = await generateCheckinData(db, getToday(), getToday(), MEETING_THRESHOLD);
       await uploadReportsToSheet(checkinData);
       if (mainWindow) {

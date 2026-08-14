@@ -1,8 +1,7 @@
 import { Database } from "sqlite";
 import { CurrentAttendanceEntry, TodaysStats } from "./types";
 
-// Time between the first and last tap of a day to consider a student to have checked out
-export const MIN_CHECKOUT_TIME_S = 10 * 60; // 10 minutes
+export const MIN_CHECKOUT_TIME_S = 5 * 60; // 5 minutes
 
 // Meeting threshold to use for automated reports
 export const MEETING_THRESHOLD = 0;
@@ -41,12 +40,10 @@ export async function generateAttendanceReport(db: Database, startDate: string, 
                          (SELECT date(timestamp) AS date,
                                  count(DISTINCT idNumber) AS numCheckins
                           FROM checkin
-                          WHERE timestamp BETWEEN :startDate AND :endDate
-                            OR timestamp LIKE :endDate || '%'
+                          WHERE timestamp BETWEEN :startDate AND :endDate || 'T23:59:59'
                           GROUP BY date
                           HAVING numCheckins >= :meetingThreshold))
-                    AND (timestamp BETWEEN :startDate AND :endDate
-                         OR timestamp LIKE :endDate || '%')
+                    AND timestamp BETWEEN :startDate AND :endDate || 'T23:59:59'
                   GROUP BY date, idNumber)
                GROUP BY idNumber
                ORDER BY numCheckins DESC) t
@@ -62,8 +59,7 @@ export async function generateAttendanceReport(db: Database, startDate: string, 
               (SELECT date(timestamp) AS date,
                       count(DISTINCT idNumber) AS numCheckins
                FROM checkin
-               WHERE timestamp BETWEEN :startDate AND :endDate
-                 OR timestamp LIKE :endDate || '%'
+               WHERE timestamp BETWEEN :startDate AND :endDate || 'T23:59:59'
                GROUP BY date
                HAVING numCheckins >= :meetingThreshold)
         `, {
@@ -74,11 +70,11 @@ export async function generateAttendanceReport(db: Database, startDate: string, 
     ]);
 
     const header = "id_number,first_name,last_name,num_checkins,attendance_rate_percent,num_checkouts,checkout_rate_percent,total_hours,average_hours\n";
-    const totalMeetings = totalMeetingsResult.total;
+    const totalMeetings = totalMeetingsResult.total || 1; // Fallback to 1 to prevent division by zero errors
     return header + checkinCountsResult.map((row) => {
         const attendanceRatePercent = (row.numCheckins / totalMeetings * 100).toFixed(2);
-        const checkoutRatePercent = row.checkoutRatePercent.toFixed(2);
-        const totalHours = row.totalHours.toFixed(2);
+        const checkoutRatePercent = (row.checkoutRatePercent || 0).toFixed(2);
+        const totalHours = (row.totalHours || 0).toFixed(2);
         const averageHours = (row.averageHours || 0).toFixed(2);
         return `${row.idNumber},${row.firstName},${row.lastName},${row.numCheckins},${attendanceRatePercent}%,${row.numCheckouts},${checkoutRatePercent}%,${totalHours},${averageHours}\n`;
     }).join("");
@@ -97,8 +93,7 @@ export async function generateMeetingReport(db: Database, startDate: string, end
                      idNumber,
                      (unixepoch(max(timestamp)) - unixepoch(min(timestamp))) >= ${MIN_CHECKOUT_TIME_S} AS hasCheckout
               FROM checkin
-              WHERE timestamp BETWEEN :startDate AND :endDate
-                OR timestamp LIKE :endDate || '%'
+              WHERE timestamp BETWEEN :startDate AND :endDate || 'T23:59:59'
               GROUP BY date,
                        idNumber)
            GROUP BY date
@@ -112,7 +107,7 @@ export async function generateMeetingReport(db: Database, startDate: string, end
 
     const header = "date,num_checkins,num_checkouts,checkout_rate_percent\n";
     return header + meetingsResult.map((row) =>
-        `${row.date},${row.numCheckins},${row.numCheckouts},${row.checkoutRatePercent.toFixed(2)}%\n`
+        `${row.date},${row.numCheckins},${row.numCheckouts},${(row.checkoutRatePercent || 0).toFixed(2)}%\n`
     ).join("");
 }
 
@@ -121,8 +116,7 @@ export async function generateCheckinData(db: Database, startDate: string, endDa
         WITH meeting_dates AS (
             SELECT date(timestamp) AS date
             FROM checkin
-            WHERE timestamp BETWEEN :startDate AND :endDate
-               OR timestamp LIKE :endDate || '%'
+            WHERE timestamp BETWEEN :startDate AND :endDate || 'T23:59:59'
             GROUP BY date
             HAVING count(DISTINCT idNumber) >= :meetingThreshold
         ), ordered AS (
@@ -135,7 +129,7 @@ export async function generateCheckinData(db: Database, startDate: string, endDa
             FROM checkin
             LEFT JOIN student ON checkin.idNumber = student.idNumber
             WHERE date(timestamp) IN (SELECT date FROM meeting_dates)
-              AND (timestamp BETWEEN :startDate AND :endDate OR timestamp LIKE :endDate || '%')
+              AND timestamp BETWEEN :startDate AND :endDate || 'T23:59:59'
         )
         SELECT o1.date AS date,
                o1.idNumber AS idNumber,
@@ -169,14 +163,14 @@ export async function isMeetingDate(db: Database, date: string, meetingThreshold
         FROM
           (SELECT idNumber
            FROM checkin
-           WHERE timestamp LIKE :date || '%'
+           WHERE date(timestamp) = :date
            GROUP BY idNumber)
     `, {
         ":date": date,
         ":meetingThreshold": meetingThreshold,
     });
 
-    return meetingsResult[0].isMeeting === 1;
+    return meetingsResult[0]?.isMeeting === 1;
 }
 
 export async function getStatsForDate(db: Database, date: string): Promise<TodaysStats> {
@@ -196,9 +190,9 @@ export async function getStatsForDate(db: Database, date: string): Promise<Today
     });
 
     return {
-        numCheckins: result.numCheckins,
-        numCheckouts: result.numCheckouts,
-        checkoutRatePercent: result.checkoutRatePercent,
+        numCheckins: result?.numCheckins || 0,
+        numCheckouts: result?.numCheckouts || 0,
+        checkoutRatePercent: result?.checkoutRatePercent || 0,
     };
 }
 
