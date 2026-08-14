@@ -20,4 +20,3 @@ apt-get install -y dpkg fakeroot
 # Execute compilation pipeline
 npm install
 npm run make:pi
-s

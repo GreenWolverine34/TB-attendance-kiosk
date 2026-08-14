@@ -139,8 +139,18 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
 
       if (e.key === "Enter" || e.code === "NumpadEnter") {
         e.preventDefault();
-        if (activeColumn === "reports") executeActionIndex(0);
-        else executeActionIndex(selectedActionIndex);
+        if (activeColumn === "reports") {
+          // Trigger the report type selected in the right column
+          if (selectedReportType === "attendance") {
+            window.electron.exportAttendanceReport(startDate, endDate, 0, false);
+          } else if (selectedReportType === "meeting") {
+            window.electron.exportMeetingReport(startDate, endDate, 0, false);
+          } else if (selectedReportType === "checkin") {
+            window.electron.exportCheckinData(startDate, endDate, 0, false);
+          }
+        } else {
+          executeActionIndex(selectedActionIndex);
+        }
       }
 
       // Close Modal: Escape OR '5' / Numpad5

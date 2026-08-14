@@ -56,16 +56,16 @@ function setupKioskTabs() {
 
   // --- DYNAMIC ROBUST CORE FORMULAS ---
   
-  // Column A & B: Offseason Hours Table (Filters by top dates B2 and B3)
+  // Column A & B: Offseason Hours Table
   var offseasonFormula = 
-    '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + (DATEVALUE(rawData!C2:C) < DATEVALUE(B2)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(B3)),, ' +
+    '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + IF(rawData!C2:C="", TRUE, (DATEVALUE(rawData!C2:C) < DATEVALUE(B2)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(B3))),, ' +
     '{rawData!A2:A & " " & rawData!B2:B, rawData!D2:D})), ' +
     '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data", 0})';
   outputSheet.getRange("A6").setFormula(offseasonFormula);
 
-  // Column D & E: Build Season Hours Table (Filters by top dates E2 and E3)
+  // Column D & E: Build Season Hours Table
   var buildSeasonFormula = 
-    '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + (DATEVALUE(rawData!C2:C) < DATEVALUE(E2)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(E3)),, ' +
+    '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + IF(rawData!C2:C="", TRUE, (DATEVALUE(rawData!C2:C) < DATEVALUE(E2)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(E3))),, ' +
     '{rawData!A2:A & " " & rawData!B2:B, rawData!D2:D})), ' +
     '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data", 0})';
   outputSheet.getRange("D6").setFormula(buildSeasonFormula);

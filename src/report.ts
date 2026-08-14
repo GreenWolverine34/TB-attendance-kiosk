@@ -1,10 +1,20 @@
 import { Database } from "sqlite";
 import { CurrentAttendanceEntry, TodaysStats } from "./types";
 
+// Minimum time a student must be checked in to be considered as having checked out
 export const MIN_CHECKOUT_TIME_S = 5 * 60; // 5 minutes
 
 // Meeting threshold to use for automated reports
 export const MEETING_THRESHOLD = 0;
+
+function escapeCsvCell(value: any): string {
+    if (value === null || value === undefined) return '""';
+    const str = String(value);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+}
 
 export async function generateAttendanceReport(db: Database, startDate: string, endDate: string, meetingThreshold: number) {
     const [
@@ -76,7 +86,7 @@ export async function generateAttendanceReport(db: Database, startDate: string, 
         const checkoutRatePercent = (row.checkoutRatePercent || 0).toFixed(2);
         const totalHours = (row.totalHours || 0).toFixed(2);
         const averageHours = (row.averageHours || 0).toFixed(2);
-        return `${row.idNumber},${row.firstName},${row.lastName},${row.numCheckins},${attendanceRatePercent}%,${row.numCheckouts},${checkoutRatePercent}%,${totalHours},${averageHours}\n`;
+        return `${escapeCsvCell(row.idNumber)},${escapeCsvCell(row.firstName)},${escapeCsvCell(row.lastName)},${row.numCheckins},${attendanceRatePercent}%,${row.numCheckouts},${checkoutRatePercent}%,${totalHours},${averageHours}\n`;
     }).join("");
 }
 
@@ -153,7 +163,7 @@ export async function generateCheckinData(db: Database, startDate: string, endDa
 
     const header = "first_name,last_name,date,hours\n";
     return header + checkinsResult.map((row) =>
-        `${row.firstName},${row.lastName},${row.date},${row.totalHours.toFixed(2)}\n`
+        `${escapeCsvCell(row.firstName)},${escapeCsvCell(row.lastName)},${escapeCsvCell(row.date)},${row.totalHours.toFixed(2)}\n`
     ).join("");
 }
 

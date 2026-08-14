@@ -40,17 +40,19 @@ function ensureKioskTabs() {
     outputSheet.getRange("G5:H5").setValues([["Name", "Hours"]]).setFontWeight("bold").setBackground("#247c28").setFontColor("#ffffff");
     outputSheet.getRange("G4:H4").setValues([["Total Hours", ""]]).setFontWeight("bold");
 
-    var offseasonFormula = 
-      '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + (DATEVALUE(rawData!C2:C) < DATEVALUE(B2)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(B3)),, ' +
-      '{rawData!A2:A & " " & rawData!B2:B, rawData!D2:D})), ' +
-      '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data", 0})';
-    outputSheet.getRange("A6").setFormula(offseasonFormula);
+    // Column A & B: Offseason Hours Table
+  var offseasonFormula = 
+    '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + IF(rawData!C2:C="", TRUE, (DATEVALUE(rawData!C2:C) < DATEVALUE(B2)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(B3))),, ' +
+    '{rawData!A2:A & " " & rawData!B2:B, rawData!D2:D})), ' +
+    '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data", 0})';
+  outputSheet.getRange("A6").setFormula(offseasonFormula);
 
-    var buildSeasonFormula = 
-      '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + (DATEVALUE(rawData!C2:C) < DATEVALUE(E2)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(E3)),, ' +
-      '{rawData!A2:A & " " & rawData!B2:B, rawData!D2:D})), ' +
-      '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data", 0})';
-    outputSheet.getRange("D6").setFormula(buildSeasonFormula);
+  // Column D & E: Build Season Hours Table
+  var buildSeasonFormula = 
+    '=IFERROR(QUERY(ARRAYFORMULA(IF((rawData!A2:A="") + IF(rawData!C2:C="", TRUE, (DATEVALUE(rawData!C2:C) < DATEVALUE(E2)) + (DATEVALUE(rawData!C2:C) > DATEVALUE(E3))),, ' +
+    '{rawData!A2:A & " " & rawData!B2:B, rawData!D2:D})), ' +
+    '"SELECT Col1, SUM(Col2) WHERE Col1 IS NOT NULL GROUP BY Col1 ORDER BY SUM(Col2) DESC LABEL Col1 \'\', SUM(Col2) \'\'"), {"No Data", 0})';
+  outputSheet.getRange("D6").setFormula(buildSeasonFormula);
 
     var overallFormula = 
       '=IFERROR(QUERY(ARRAYFORMULA(IF(rawData!A2:A="",, {rawData!A2:A & " " & rawData!B2:B, rawData!D2:D})), ' +
