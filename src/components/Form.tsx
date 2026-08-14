@@ -29,13 +29,6 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess, onU
     setIsLastInputFromNumpad(true);
   } 
 
-  function isPrefixMatch(candidate: string) {
-    if (candidate.length === 0) {
-      return true;
-    }
-    return validStudentIds.some((id) => id.startsWith(candidate));
-  }
-
   function isKnownStudentTag(candidate: string) {
     return validStudentIds.includes(candidate);
   }
@@ -101,7 +94,7 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess, onU
     }
 
     // 3. Screen is unlocked: proceed with standard student ID validation
-    if (value.length !== 10 || (validStudentIds.length > 0 && !isKnownStudentTag(value))) {
+    if (validStudentIds.length > 0 && !isKnownStudentTag(value)) {
       if (typeof onUserNotFound === "function") {
         onUserNotFound();
       }
@@ -131,7 +124,6 @@ export default function Form({ isUnlocked, isActive, onAdminCode, onSuccess, onU
     target.focus(); 
   } 
 }
-
 
   function handleButtonActive(e: React.PointerEvent<HTMLButtonElement>) { 
     setActiveButton(e.currentTarget.value); 

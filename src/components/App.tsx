@@ -30,6 +30,10 @@ export default function App() {
     sendToGoogleSheet: false,
   });
 
+  useEffect(() => {
+    window.electron.getEnabledActions().then(setEnabledActions).catch(console.error);
+  }, []);
+
   function handleSubmit(name?: string) {
     setPromptText(name ? `${name} clocked in` : PROMPT_SUCCESS);
     setLastPromptTime(new Date());

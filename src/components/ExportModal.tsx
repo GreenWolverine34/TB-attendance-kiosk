@@ -117,8 +117,8 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
         setActiveColumn("reports");
       }
 
-      // UP NAVIGATION: ArrowUp OR '2' / Numpad2
-      if (e.key === "ArrowUp" || e.key === "2" || e.code === "Numpad2") {
+      // UP NAVIGATION: ArrowUp OR '8' / Numpad8 (Fixed from inverted Numpad 2)
+      if (e.key === "ArrowUp" || e.key === "8" || e.code === "Numpad8") {
         e.preventDefault();
         if (activeColumn === "reports") {
           setSelectedReportType((curr) => (curr === "checkin" ? "meeting" : curr === "meeting" ? "attendance" : curr));
@@ -127,8 +127,8 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
         }
       }
 
-      // DOWN NAVIGATION: ArrowDown OR '8' / Numpad8
-      if (e.key === "ArrowDown" || e.key === "8" || e.code === "Numpad8") {
+      // DOWN NAVIGATION: ArrowDown OR '2' / Numpad2 (Fixed from inverted Numpad 8)
+      if (e.key === "ArrowDown" || e.key === "2" || e.code === "Numpad2") {
         e.preventDefault();
         if (activeColumn === "reports") {
           setSelectedReportType((curr) => (curr === "attendance" ? "meeting" : curr === "meeting" ? "checkin" : curr));
@@ -163,7 +163,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
 
       <div className="modal-row" style={{ background: "#f5f5f5", padding: "0.5rem", borderRadius: "8px", fontSize: "0.85rem", color: "#444" }}>
         <strong>Numpad Nav Controls:</strong>
-        <span style={{ margin: "0 0.4rem" }}>↕ [2 Up / 8 Down]</span> |
+        <span style={{ margin: "0 0.4rem" }}>↕ [8 Up / 2 Down]</span> |
         <span style={{ margin: "0 0.4rem" }}>↔ [4 / 6] Swap Column</span> |
         <span style={{ margin: "0 0.4rem" }}>📅 Start [7 / 9]</span> |
         <span style={{ margin: "0 0.4rem" }}>📅 End [1 / 3]</span> |
@@ -194,6 +194,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
 
             <button
               name="action-sync-google"
+              disabled={!enabledActions.sendToGoogleSheet}
               className={`modal-submit-button main-action ${activeColumn === "actions" && selectedActionIndex === 1 ? "keyboard-focused" : ""}`}
               style={{ background: activeColumn === "actions" && selectedActionIndex === 1 ? "#e2f0d9" : "", borderColor: activeColumn === "actions" && selectedActionIndex === 1 ? "#247c28" : "" }}
               type="submit">
@@ -202,6 +203,7 @@ export default function ExportModal({ isOpen, onClose, enabledActions }: ExportM
 
             <button
               name="action-send-email"
+              disabled={!enabledActions.sendReportEmail}
               className={`modal-submit-button main-action ${activeColumn === "actions" && selectedActionIndex === 2 ? "keyboard-focused" : ""}`}
               style={{ background: activeColumn === "actions" && selectedActionIndex === 2 ? "#e2f0d9" : "", borderColor: activeColumn === "actions" && selectedActionIndex === 2 ? "#247c28" : "" }}
               type="submit">

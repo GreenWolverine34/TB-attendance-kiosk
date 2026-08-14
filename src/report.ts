@@ -207,13 +207,13 @@ export async function getCurrentAttendance(db: Database, date: string): Promise<
         SELECT checkin.idNumber,
                ifnull(student.firstName, '') AS firstName,
                ifnull(student.lastName, '') AS lastName,
-               min(timestamp) AS checkinTime
+               max(timestamp) AS checkinTime
         FROM checkin
         LEFT JOIN student ON checkin.idNumber = student.idNumber
         WHERE date(timestamp) = :date
         GROUP BY checkin.idNumber
         HAVING (count(*) % 2) = 1
-        ORDER BY min(timestamp) ASC
+        ORDER BY max(timestamp) ASC
     `, {
         ":date": date,
     });

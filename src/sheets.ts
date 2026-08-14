@@ -99,18 +99,13 @@ export async function uploadReportsToSheet(checkinInput: string | string[][]) {
     values = hasHeader ? checkinInput.slice(1) : checkinInput;
   }
 
-  // Clear existing rawData rows to avoid duplicate accumulation across syncs
-  await sheets.spreadsheets.values.clear({
-    spreadsheetId: sheetId,
-    range: "rawData!A2:Z",
-  });
-
-  // Write new data starting at row 2
+  // Append new records to rawData to preserve historical sync data
   if (values.length > 0) {
-    await sheets.spreadsheets.values.update({
+    await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
-      range: "rawData!A2",
+      range: "rawData!A1",
       valueInputOption: "USER_ENTERED",
+      insertDataOption: "INSERT_ROWS",
       requestBody: { values },
     });
   }
