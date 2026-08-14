@@ -1,17 +1,41 @@
-import { CurrentAttendanceEntry } from "./types";
+import sqlite3 from "sqlite3";
+import * as path from "path";
 
-export function formatAttendanceForSlack(currentAttendance: CurrentAttendanceEntry[], now: Date = new Date()): string[] {
-  return currentAttendance.map((attendee) => {
-    const checkInTime = new Date(attendee.checkinTime);
-    const diffMs = now.getTime() - checkInTime.getTime();
-    
-    const totalMinutes = Math.floor(diffMs / (1000 * 60));
-    const hours = Math.floor(totalMinutes / 60);
-    const mins = totalMinutes % 60;
-    const timeSpent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+const dbPath = path.resolve(__dirname, "../attendance.db");
+export const db = new sqlite3.Database(dbPath);
 
-    const fullName = `${attendee.firstName} ${attendee.lastName}`.trim();
+export interface AttendanceRecord {
+  id: string;
+  name: string;
+  slackId?: string;
+  checkinTime: string;
+}
 
-    return `• ${fullName} — ${timeSpent}`;
+export function getCurrentAttendance(): Promise<AttendanceRecord[]> {
+  const query = `
+    SELECT 
+      s.id AS id,
+      s.name AS name,
+      s.slack_id AS slackId,
+      c.timestamp AS checkinTime
+    FROM checkins c
+    JOIN students s ON c.student_id = s.id
+    WHERE c.type = 'CHECKIN'
+      AND c.student_id NOT IN (
+        SELECT student_id 
+        FROM checkins 
+        WHERE type = 'CHECKOUT' AND timestamp > c.timestamp
+      )
+    ORDER BY c.timestamp DESC;
+  `;
+
+  return new Promise((resolve, reject) => {
+    db.all(query, [], (err, rows: AttendanceRecord[]) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows || []);
+      }
+    });
   });
 }
