@@ -81,6 +81,8 @@ if (slackBotToken && slackAppToken) {
     socketMode: true,
   });
 
+  // File: src/index.ts (Inside slackBot.command("/attendance", ...))
+
   slackBot.command("/attendance", async ({ ack, respond, command }) => {
     await ack();
 
@@ -94,7 +96,7 @@ if (slackBotToken && slackAppToken) {
           text:
             `ℹ️ *Attendance Command Usage:*\n` +
             `• \`/attendance\` or \`/attendance status\` — View currently checked-in attendees\n` +
-            `• \`/attendance close\` or \`/attendance report\` — Close session and email reports`,
+            `• \`/attendance close\` — Close session and check everyone out`,
         });
         return;
       }
@@ -128,7 +130,8 @@ if (slackBotToken && slackAppToken) {
         return `• *${fullName}*${slackHandle} — ${timeSpent} (Checked in at ${checkInTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})`;
       });
 
-      if (param === "report" || param === "summary" || param === "close") {
+      // Updated: Check specifically for "close" instead of "report"
+      if (param === "close") {
         for (const attendee of currentAttendance) {
           await db.run(
             "INSERT INTO checkin (timestamp, idNumber) VALUES (?, ?)",
@@ -144,7 +147,7 @@ if (slackBotToken && slackAppToken) {
         const messageText =
           `📋 *Meeting Attendance Summary Report*\n` +
           `*Attendance Status:* Closed\n` +
-          `*Total Attendees:* ${currentAttendance.length}\n\n` +
+          `*Total Attendees Checked Out:* ${currentAttendance.length}\n\n` +
           attendeeLines.join("\n");
 
         await respond({
@@ -156,7 +159,7 @@ if (slackBotToken && slackAppToken) {
           `🟢 *Active Attendance Status*\n` +
           `*Currently Checked In:* ${currentAttendance.length}\n\n` +
           attendeeLines.join("\n") +
-          `\n\n_Tip: Type \`/attendance report\` to generate final report and close meeting session._`;
+          `\n\n_Tip: Type \`/attendance close\` to check everyone out and close the meeting session._`;
 
         await respond({
           response_type: "in_channel",
@@ -217,6 +220,8 @@ app.on("ready", async () => {
     return { success: false };
   });
 
+  // File: src/index.ts (Inside ipcMain.handle("closeAttendance", ...))
+
   ipcMain.handle("closeAttendance", async () => {
     try {
       const today = getToday();
@@ -230,7 +235,8 @@ app.on("ready", async () => {
       let emailed = false;
       if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASS) {
         try {
-          await sendReportEmail(db, "all");
+          // Pass "summary_only" to prevent CSV attachments in automated emails
+          await sendReportEmail(db, "summary_only");
           emailed = true;
         } catch (emailErr) {
           console.error("Automated email send failed on close:", emailErr);
