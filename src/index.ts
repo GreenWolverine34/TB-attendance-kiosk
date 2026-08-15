@@ -31,13 +31,11 @@ if (require("electron-squirrel-startup")) {
 
 const DB_PATH = path.join(app.getPath("userData"), "data.db");
 
-// SECURED CREDENTIAL FALLBACKS: Removed hardcoded cleartext string pin keys
 const KIOSK_PIN = process.env.ATTENDANCE_KIOSK_PIN;
 const EXPORT_PIN = process.env.ATTENDANCE_EXPORT_PIN;
 
 let dbInstance: Database | null = null;
 let mainWindow: BrowserWindow | null = null;
-
 async function initDB(): Promise<Database> {
   if (dbInstance) return dbInstance;
 
@@ -66,20 +64,17 @@ async function initDB(): Promise<Database> {
 }
 
 async function archiveAndClearAttendance(db: Database) {
-  // Determine the oldest attendance record
   const oldest = await db.get<{ oldestDate: string | null }>(`
     SELECT MIN(date(timestamp)) AS oldestDate
     FROM checkin
   `);
 
-  // Nothing to archive
   if (!oldest?.oldestDate) {
     return;
   }
 
   const today = getToday();
 
-  // Generate ALL historical attendance data
   const checkinData = await generateCheckinData(
     db,
     oldest.oldestDate,
@@ -87,10 +82,7 @@ async function archiveAndClearAttendance(db: Database) {
     MEETING_THRESHOLD
   );
 
-  // Upload to Google Sheets FIRST
   await uploadReportsToSheet(checkinData);
-
-  // Only delete if Google Sheets upload succeeded
   await db.run("DELETE FROM checkin");
 }
 
@@ -120,8 +112,6 @@ async function syncAllAttendanceToGoogleSheets(db: Database) {
     `Google Sheets sync complete: ${oldestRecord.oldestDate} through ${today}.`
   );
 }
-
-// Initialize Slack Bolt Application
 const slackBotToken = process.env.SLACK_BOT_TOKEN || process.env.SLACK_TOKEN;
 const slackAppToken = process.env.SLACK_APP_TOKEN;
 
@@ -131,6 +121,16 @@ if (slackBotToken) {
 }
 
 let slackBot: SlackApp | null = null;
+
+type AttendanceEditSession = {
+  callerId: string;
+  channelId: string;
+  messageTs: string;
+  attendees: any[];
+  attendeeLines: string[];
+};
+
+const attendanceEditSessions = new Map<string, AttendanceEditSession>();
 if (slackBotToken && slackAppToken) {
   slackBot = new SlackApp({
     token: slackBotToken,
@@ -138,9 +138,7 @@ if (slackBotToken && slackAppToken) {
     socketMode: true,
   });
 
-  // File: src/index.ts (Inside slackBot.command("/attendance", ...))
-
-  slackBot.command("/attendance", async ({ ack, respond, command }) => {
+  slackBot.command("/attendance", async ({ ack, respond, command, client }) => {
     await ack();
 
     try {
@@ -172,28 +170,79 @@ if (slackBotToken && slackAppToken) {
       const nowISO = toISOString(now);
 
       const attendeeLines = currentAttendance.map((attendee: any) => {
-        const checkInTime = new Date(attendee.checkinTime || attendee.timestamp);
+        const checkInTime = new Date(
+          attendee.checkinTime || attendee.timestamp
+        );
+
         const diffMs = now.getTime() - checkInTime.getTime();
         const totalMinutes = Math.floor(diffMs / (1000 * 60));
+
         const hours = Math.floor(totalMinutes / 60);
         const mins = totalMinutes % 60;
+
         const timeSpent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+
         const fullName = `${attendee.firstName} ${attendee.lastName}`;
 
         const slackHandle = attendee.slackId
           ? ` (@${attendee.slackId.replace(/^@/, "")})`
           : "";
 
-        return `• *${fullName}*${slackHandle} — ${timeSpent} (Checked in at ${checkInTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})`;
+        return (
+          `• *${fullName}*${slackHandle} — ${timeSpent}` +
+          ` (Checked in at ${checkInTime.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })})`
+        );
       });
 
-      // Updated: Check specifically for "close" instead of "report"
       if (param === "close") {
+        const messageText =
+          `📋 *Meeting Attendance Summary Report*\n` +
+          `*Attendance Status:* Closed\n` +
+          `*Total Attendees Checked Out:* ${currentAttendance.length}\n\n` +
+          attendeeLines.join("\n");
+
+        /*
+         * 1. Dispatch the Slack card first. If this errors out, database checkouts are preserved.
+         */
+        const result = await client.chat.postMessage({
+          channel: command.channel_id,
+          text: messageText,
+          blocks: [
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: messageText,
+              },
+            },
+            {
+              type: "actions",
+              elements: [
+                {
+                  type: "button",
+                  action_id: "edit_attendance",
+                  text: {
+                    type: "plain_text",
+                    text: "✏️ Edit Work Done",
+                  },
+                  value: "edit",
+                },
+              ],
+            },
+          ],
+        });
+
+        /*
+         * 2. Commit SQLite checkout records only after message delivery success
+         */
         for (const attendee of currentAttendance) {
           await db.run(
             "INSERT INTO checkin (timestamp, idNumber) VALUES (?, ?)",
             nowISO,
-            attendee.idNumber,
+            attendee.idNumber
           );
         }
 
@@ -201,30 +250,211 @@ if (slackBotToken && slackAppToken) {
           mainWindow.webContents.send("lock-console");
         }
 
-        const messageText =
-          `📋 *Meeting Attendance Summary Report*\n` +
-          `*Attendance Status:* Closed\n` +
-          `*Total Attendees Checked Out:* ${currentAttendance.length}\n\n` +
-          attendeeLines.join("\n");
+        if (result.ts) {
+          const sessionKey = `${command.channel_id}:${result.ts}`;
 
-        await respond({
-          response_type: "in_channel",
-          text: messageText,
-        });
-      } else {
-        const messageText =
-          `🟢 *Active Attendance Status*\n` +
-          `*Currently Checked In:* ${currentAttendance.length}\n\n` +
-          attendeeLines.join("\n") +
-          `\n\n_Tip: Type \`/attendance close\` to check everyone out and close the meeting session._`;
+          attendanceEditSessions.set(sessionKey, {
+            callerId: command.user_id,
+            channelId: command.channel_id,
+            messageTs: result.ts,
+            attendees: currentAttendance,
+            attendeeLines,
+          });
+        }
 
-        await respond({
-          response_type: "in_channel",
-          text: messageText,
-        });
+        return;
       }
+
+      const messageText =
+        `🟢 *Active Attendance Status*\n` +
+        `*Currently Checked In:* ${currentAttendance.length}\n\n` +
+        attendeeLines.join("\n") +
+        `\n\n_Tip: Type \`/attendance close\` to check everyone out and close the meeting session._`;
+
+      await respond({
+        response_type: "in_channel",
+        text: messageText,
+      });
     } catch (err) {
       console.error("Error handling /attendance command:", err);
+    }
+  });
+  slackBot.action("edit_attendance", async ({ ack, body, client }) => {
+    await ack();
+
+    try {
+      const message = (body as any).message;
+      const channel = (body as any).channel;
+
+      if (!message?.ts || !channel?.id) {
+        return;
+      }
+
+      const sessionKey = `${channel.id}:${message.ts}`;
+      const session = attendanceEditSessions.get(sessionKey);
+
+      if (!session) {
+        await client.chat.postEphemeral({
+          channel: channel.id,
+          user: (body as any).user.id,
+          text:
+            "⚠️ This attendance report can no longer be edited. " +
+            "The kiosk may have been restarted.",
+        });
+        return;
+      }
+
+      if ((body as any).user.id !== session.callerId) {
+        await client.chat.postEphemeral({
+          channel: channel.id,
+          user: (body as any).user.id,
+          text: "⚠️ Only the person who ran `/attendance close` can edit this attendance report.",
+        });
+        return;
+      }
+
+      const blocks: any[] = [
+        {
+          type: "input",
+          block_id: "meeting_notes",
+          optional: true,
+          label: {
+            type: "plain_text",
+            text: "Meeting Notes",
+          },
+          element: {
+            type: "plain_text_input",
+            action_id: "value",
+            multiline: true,
+            placeholder: {
+              type: "plain_text",
+              text: "Optional notes about the meeting...",
+            },
+          },
+        },
+      ];
+
+      for (const attendee of session.attendees) {
+        blocks.push({
+          type: "input",
+          block_id: `work_${attendee.idNumber}`,
+          optional: true,
+          label: {
+            type: "plain_text",
+            text: `${attendee.firstName} ${attendee.lastName}`,
+          },
+          element: {
+            type: "plain_text_input",
+            action_id: "value",
+            multiline: true,
+            placeholder: {
+              type: "plain_text",
+              text: "What did they work on?",
+            },
+          },
+        });
+      }
+
+      await client.views.open({
+        trigger_id: (body as any).trigger_id,
+        view: {
+          type: "modal",
+          callback_id: "edit_attendance_modal",
+          private_metadata: JSON.stringify({
+            channelId: session.channelId,
+            messageTs: session.messageTs,
+          }),
+          title: {
+            type: "plain_text",
+            text: "Edit Attendance",
+          },
+          submit: {
+            type: "plain_text",
+            text: "Save",
+          },
+          close: {
+            type: "plain_text",
+            text: "Cancel",
+          },
+          blocks,
+        },
+      });
+    } catch (err) {
+      console.error("Error opening attendance edit modal:", err);
+    }
+  });
+
+  slackBot.view("edit_attendance_modal", async ({ ack, body, view, client }) => {
+    await ack();
+
+    try {
+      const metadata = JSON.parse(view.private_metadata);
+      const sessionKey = `${metadata.channelId}:${metadata.messageTs}`;
+      const session = attendanceEditSessions.get(sessionKey);
+
+      if (!session) {
+        console.error("Attendance edit session no longer exists:", sessionKey);
+        return;
+      }
+
+      if ((body as any).user.id !== session.callerId) {
+        console.warn("Unauthorized attendance edit attempt:", (body as any).user.id);
+        return;
+      }
+
+      const values = (view as any).state.values;
+      const meetingNotes = values.meeting_notes?.value?.value?.trim() || "";
+      const workEntries: string[] = [];
+
+      for (const attendee of session.attendees) {
+        const blockId = `work_${attendee.idNumber}`;
+        const work = values[blockId]?.value?.value?.trim() || "";
+        const name = `${attendee.firstName} ${attendee.lastName}`;
+
+        if (work) {
+          workEntries.push(`• *${name}* — ${work}`);
+        } else {
+          workEntries.push(`• *${name}* — _No work entered_`);
+        }
+      }
+
+      let updatedMessage =
+        `📋 *Meeting Attendance Summary Report*\n` +
+        `*Attendance Status:* Closed\n` +
+        `*Total Attendees Checked Out:* ${session.attendees.length}\n\n`;
+
+      updatedMessage += session.attendeeLines.join("\n");
+      updatedMessage += `\n*Work Completed:*\n` + workEntries.join("\n");
+
+      if (meetingNotes) {
+        updatedMessage += `\n\n*Meeting Notes:*\n${meetingNotes}`;
+      }
+
+      await client.chat.update({
+        channel: metadata.channelId,
+        ts: metadata.messageTs,
+        text: updatedMessage,
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: updatedMessage,
+            },
+          },
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: "✏️ Edited by the person who closed attendance.",
+              },
+            ],
+          },
+        ],
+      });
+    } catch (err) {
+      console.error("Error saving attendance edit:", err);
     }
   });
 
@@ -249,17 +479,13 @@ function createWindow(): void {
     mainWindow.webContents.openDevTools();
   }
 }
-
 app.on("ready", async () => {
   const db = await initDB();
 
-  // Automatically sync Google Sheets every day at 11:59 PM
   schedule.scheduleJob("59 23 * * *", async () => {
     try {
       console.log("Starting automatic Google Sheets sync...");
-
       await syncAllAttendanceToGoogleSheets(db);
-
       console.log("Automatic Google Sheets sync successful.");
     } catch (err) {
       console.error("Automatic Google Sheets sync failed:", err);
@@ -289,8 +515,6 @@ app.on("ready", async () => {
     return { success: false };
   });
 
-  // File: src/index.ts (Inside ipcMain.handle("closeAttendance", ...))
-
   ipcMain.handle("closeAttendance", async () => {
     try {
       const today = getToday();
@@ -304,7 +528,6 @@ app.on("ready", async () => {
       let emailed = false;
       if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASS) {
         try {
-          // Pass "summary_only" to prevent CSV attachments in automated emails
           await sendReportEmail(db, "summary_only");
           emailed = true;
         } catch (emailErr) {
@@ -345,8 +568,6 @@ app.on("ready", async () => {
     const rows = await db.all<{ idNumber: string }[]>("SELECT idNumber FROM student");
     return rows.map((r) => r.idNumber);
   });
-
-  // NON-BLOCKING FILE EXPORTS: Replaced slow writeFileSync loops with fast async Promises
   ipcMain.on("exportAttendanceReport", async (_, startDate: string, endDate: string, meetingThreshold: number) => {
     try {
       if (!mainWindow) return;
@@ -415,7 +636,6 @@ app.on("ready", async () => {
       if (mainWindow) dialog.showErrorBox("Export Error", String(err));
     }
   });
-  // SECURED COMPILATION PARSER LOOP: Replaced inline string builders with prepared execution statements
   ipcMain.on("importStudents", async () => {
     try {
       if (!mainWindow) return;
@@ -443,7 +663,7 @@ app.on("ready", async () => {
         try {
           await archiveAndClearAttendance(db);
         } catch (err) {
-        if (mainWindow) {
+          if (mainWindow) {
             dialog.showErrorBox(
               "Import Cancelled",
               `Could not archive attendance data to Google Sheets.\n\n${String(err)}`
@@ -474,7 +694,6 @@ app.on("ready", async () => {
           }
           await insertStmt.finalize();
 
-          // SECURED ROSTER UPDATING: Safely filters old names out without wiping historical logs
           if (importedIds.size > 0) {
             const idArray = Array.from(importedIds);
             const placeholders = idArray.map(() => "?").join(",");
@@ -518,30 +737,29 @@ app.on("ready", async () => {
   });
 
   ipcMain.on("syncToGoogleSheet", async () => {
-  try {
-    await syncAllAttendanceToGoogleSheets(db);
+    try {
+      await syncAllAttendanceToGoogleSheets(db);
 
-    if (mainWindow) {
-      await dialog.showMessageBox(mainWindow, {
-        title: "Sync Complete",
-        message: "Google Sheets is up to date.",
-      });
-    }
-  } catch (err) {
-    console.error("Google Sheets sync failed:", err);
+      if (mainWindow) {
+        await dialog.showMessageBox(mainWindow, {
+          title: "Sync Complete",
+          message: "Google Sheets is up to date.",
+        });
+      }
+    } catch (err) {
+      console.error("Google Sheets sync failed:", err);
 
-    if (mainWindow) {
-      dialog.showErrorBox(
-        "Sync Error",
-        `Google Sheets could not be updated.\n\n${String(err)}`
-      );
+      if (mainWindow) {
+        dialog.showErrorBox(
+          "Sync Error",
+          `Google Sheets could not be updated.\n\n${String(err)}`
+        );
+      }
     }
-  }
-});
+  });
 
   createWindow();
 });
-
 app.on("before-quit", async () => {
   if (dbInstance) {
     try {
