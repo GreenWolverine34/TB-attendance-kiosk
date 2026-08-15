@@ -16,7 +16,7 @@ curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
 sudo usermod -aG docker \USER && newgrp docker
 
 # 3. Install NVM & Node.js LTS
-curl -o- https://githubusercontent.com | bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.6/install.sh | bash
 source ~/.bashrc
 nvm install --lts
 ```
