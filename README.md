@@ -11,8 +11,9 @@ Before setting up the project, update your package lists and install all core ru
 sudo apt update && sudo apt install -y dpkg-dev fakeroot
 
 # 2. Install Docker using the official automated helper script
+#replace USER with username on Pi
 curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
-sudo usermod -aG docker \$USER && newgrp docker
+sudo usermod -aG docker \USER && newgrp docker
 
 # 3. Install NVM & Node.js LTS
 curl -o- https://githubusercontent.com | bash
