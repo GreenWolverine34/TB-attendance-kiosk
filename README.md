@@ -31,7 +31,7 @@ Clone the project directly from GitHub using your terminal environment, then cha
 
 ```bash
 # Clone the repository structure from GitHub
-git clone https://github.com
+git clone https://github.com/GreenWolverine34/TB-attendance-kiosk/
 
 # Enter the root directory of the application
 cd TB-attendance-kiosk
