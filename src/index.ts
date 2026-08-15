@@ -4,6 +4,7 @@ import * as path from "path";
 import { parse } from "csv-parse";
 import { WebClient } from "@slack/web-api";
 import { App as SlackApp } from "@slack/bolt";
+import schedule from "node-schedule";
 import sqlite3 from "sqlite3";
 import { open, Database } from "sqlite";
 import "dotenv/config";
@@ -62,6 +63,62 @@ async function initDB(): Promise<Database> {
   `);
 
   return dbInstance;
+}
+
+async function archiveAndClearAttendance(db: Database) {
+  // Determine the oldest attendance record
+  const oldest = await db.get<{ oldestDate: string | null }>(`
+    SELECT MIN(date(timestamp)) AS oldestDate
+    FROM checkin
+  `);
+
+  // Nothing to archive
+  if (!oldest?.oldestDate) {
+    return;
+  }
+
+  const today = getToday();
+
+  // Generate ALL historical attendance data
+  const checkinData = await generateCheckinData(
+    db,
+    oldest.oldestDate,
+    today,
+    MEETING_THRESHOLD
+  );
+
+  // Upload to Google Sheets FIRST
+  await uploadReportsToSheet(checkinData);
+
+  // Only delete if Google Sheets upload succeeded
+  await db.run("DELETE FROM checkin");
+}
+
+async function syncAllAttendanceToGoogleSheets(db: Database) {
+  const oldestRecord = await db.get<{ oldestDate: string | null }>(`
+    SELECT MIN(date(timestamp)) AS oldestDate
+    FROM checkin
+  `);
+
+  if (!oldestRecord?.oldestDate) {
+    console.log("Google Sheets sync: no attendance data to upload.");
+    return;
+  }
+
+  const today = getToday();
+
+  const checkinData = await generateCheckinData(
+    db,
+    oldestRecord.oldestDate,
+    today,
+    MEETING_THRESHOLD
+  );
+
+  await uploadReportsToSheet(checkinData);
+
+  console.log(
+    `Google Sheets sync complete: ${oldestRecord.oldestDate} through ${today}.`
+  );
 }
 
 // Initialize Slack Bolt Application
@@ -196,6 +253,18 @@ function createWindow(): void {
 app.on("ready", async () => {
   const db = await initDB();
 
+  // Automatically sync Google Sheets every day at 11:59 PM
+  schedule.scheduleJob("59 23 * * *", async () => {
+    try {
+      console.log("Starting automatic Google Sheets sync...");
+
+      await syncAllAttendanceToGoogleSheets(db);
+
+      console.log("Automatic Google Sheets sync successful.");
+    } catch (err) {
+      console.error("Automatic Google Sheets sync failed:", err);
+    }
+  });
   ipcMain.handle("submit", async (_, idNumber: string) => {
     const student = await db.get("SELECT * FROM student WHERE idNumber = ?", idNumber);
     if (!student) {
@@ -371,6 +440,17 @@ app.on("ready", async () => {
         let numFailure = 0;
         const importedIds = new Set<string>();
 
+        try {
+          await archiveAndClearAttendance(db);
+        } catch (err) {
+        if (mainWindow) {
+            dialog.showErrorBox(
+              "Import Cancelled",
+              `Could not archive attendance data to Google Sheets.\n\n${String(err)}`
+            );
+          }
+          return;
+        }
         await db.run("BEGIN TRANSACTION");
         try {
           const insertStmt = await db.prepare(
@@ -438,19 +518,26 @@ app.on("ready", async () => {
   });
 
   ipcMain.on("syncToGoogleSheet", async () => {
-    try {
-      const checkinData = await generateCheckinData(db, getToday(), getToday(), MEETING_THRESHOLD);
-      await uploadReportsToSheet(checkinData);
-      if (mainWindow) {
-        await dialog.showMessageBox(mainWindow, {
-          title: "Sync Complete",
-          message: "Google Sheets updated with today's attendance.",
-        });
-      }
-    } catch (err) {
-      if (mainWindow) dialog.showErrorBox("Sync Error", String(err));
+  try {
+    await syncAllAttendanceToGoogleSheets(db);
+
+    if (mainWindow) {
+      await dialog.showMessageBox(mainWindow, {
+        title: "Sync Complete",
+        message: "Google Sheets is up to date.",
+      });
     }
-  });
+  } catch (err) {
+    console.error("Google Sheets sync failed:", err);
+
+    if (mainWindow) {
+      dialog.showErrorBox(
+        "Sync Error",
+        `Google Sheets could not be updated.\n\n${String(err)}`
+      );
+    }
+  }
+});
 
   createWindow();
 });

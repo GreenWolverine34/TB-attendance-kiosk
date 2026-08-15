@@ -95,18 +95,60 @@ export async function uploadReportsToSheet(checkinInput: string | string[][]) {
     values = csvToValues(checkinInput, true);
   } else if (Array.isArray(checkinInput)) {
     if (checkinInput.length === 0) return;
-    const hasHeader = checkinInput[0] && String(checkinInput[0][0]).toLowerCase().includes("first");
+
+    const hasHeader =
+      checkinInput[0] &&
+      String(checkinInput[0][0]).toLowerCase().includes("first");
+
     values = hasHeader ? checkinInput.slice(1) : checkinInput;
   }
 
-  // Append new records to rawData to preserve historical sync data
-  if (values.length > 0) {
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: sheetId,
-      range: "rawData!A1",
-      valueInputOption: "USER_ENTERED",
-      insertDataOption: "INSERT_ROWS",
-      requestBody: { values },
-    });
+  if (values.length === 0) return;
+
+  // Read existing rawData records
+  const existingResult = await sheets.spreadsheets.values.get({
+    spreadsheetId: sheetId,
+    range: "rawData!A2:D",
+  });
+
+  const existingRows = existingResult.data.values || [];
+
+  // Create a unique key from the four rawData columns
+  const makeKey = (row: any[]) =>
+    row.map(value => String(value ?? "").trim()).join("\x1F");
+
+  const existingKeys = new Set(
+    existingRows.map(makeKey)
+  );
+
+  // Only upload rows that aren't already in rawData
+  const newValues = values.filter(row => {
+    const key = makeKey(row);
+
+    if (existingKeys.has(key)) {
+      return false;
+    }
+
+    existingKeys.add(key);
+    return true;
+  });
+
+  if (newValues.length === 0) {
+    console.log("Google Sheets already contains all attendance data.");
+    return;
   }
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: sheetId,
+    range: "rawData!A1",
+    valueInputOption: "USER_ENTERED",
+    insertDataOption: "INSERT_ROWS",
+    requestBody: {
+      values: newValues,
+    },
+  });
+
+  console.log(
+    `Google Sheets sync complete: ${newValues.length} new rows uploaded.`
+  );
 }
