@@ -17,4 +17,4 @@ export interface CurrentAttendanceEntry {
     checkinTime: string;
 }
 
-export type AdminCodeAction = "attendance" | "export";
+export type AdminCodeAction = "attendance" | "export" | "toggle-kiosk";

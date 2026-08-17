@@ -33,6 +33,7 @@ const DB_PATH = path.join(app.getPath("userData"), "data.db");
 
 const KIOSK_PIN = process.env.ATTENDANCE_KIOSK_PIN;
 const EXPORT_PIN = process.env.ATTENDANCE_EXPORT_PIN;
+const EXIT_KIOSK_PIN = process.env.ATTENDANCE_EXIT_KIOSK_PIN;
 
 let dbInstance: Database | null = null;
 let mainWindow: BrowserWindow | null = null;
@@ -507,12 +508,42 @@ app.on("ready", async () => {
   });
 
   ipcMain.handle("authorizeAdminCode", async (_, pin: string) => {
-    if (KIOSK_PIN && pin === KIOSK_PIN) {
-      return { success: true, action: "attendance" };
-    } else if (EXPORT_PIN && pin === EXPORT_PIN) {
-      return { success: true, action: "export" };
+
+  // Secret kiosk toggle PIN
+  if (EXIT_KIOSK_PIN && pin === EXIT_KIOSK_PIN) {
+
+    if (mainWindow) {
+      const currentlyKiosk = mainWindow.isKiosk();
+
+      if (currentlyKiosk) {
+        // Leave kiosk mode
+        mainWindow.setKiosk(false);
+        mainWindow.setFullScreen(false);
+        mainWindow.setMenuBarVisibility(true);
+        mainWindow.setResizable(true);
+      } else {
+        // Re-enter kiosk mode
+        mainWindow.setKiosk(true);
+        mainWindow.setFullScreen(true);
+        mainWindow.setMenuBarVisibility(false);
+        mainWindow.setResizable(false);
+      }
     }
-    return { success: false };
+
+    return { success: true, action: "toggle-kiosk" };
+  }
+
+  // Existing attendance PIN
+  if (KIOSK_PIN && pin === KIOSK_PIN) {
+    return { success: true, action: "attendance" };
+  }
+
+  // Existing export PIN
+  if (EXPORT_PIN && pin === EXPORT_PIN) {
+    return { success: true, action: "export" };
+  }
+
+  return { success: false };
   });
 
   ipcMain.handle("closeAttendance", async () => {

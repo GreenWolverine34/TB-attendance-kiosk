@@ -54,6 +54,12 @@ export default function App() {
       return "export";
     }
 
+    if (response.action === "toggle-kiosk") {
+      setPromptText("Kiosk mode toggled");
+      setLastPromptTime(new Date());
+      return "toggle-kiosk";
+    }
+
     const nextUnlocked = !isUnlocked;
     if (!nextUnlocked) {
       const closeResponse = await window.electron.closeAttendance();
