@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron";
+app.disableHardwareAcceleration();
 import * as fs from "fs";
 import * as path from "path";
 import { parse } from "csv-parse";
